@@ -39,6 +39,7 @@
 #pragma		config  DEBUG = OFF
 
 #define N_ADC_CHANNELS	4
+#define BAUD19200
 
 unsigned int anADCValues_RAW[N_ADC_CHANNELS];
 
@@ -72,13 +73,17 @@ void main(void)
 //	PIE1bits.RCIE = 1;			// Enables the EUSART receive interrupt
 
 
+	// T0_PS_1_32 = 1.05 s
 
-	OpenTimer0(TIMER_INT_ON & T0_16BIT & T0_SOURCE_INT & T0_PS_1_16);
+	OpenTimer0(TIMER_INT_ON & T0_16BIT & T0_SOURCE_INT & T0_PS_1_32);
+	OpenTimer1(TIMER_INT_ON & T1_16BIT_RW & T1_SOURCE_INT & T1_PS_1_2 & T1_OSC1EN_OFF);	
 
 	Delay1KTCYx(100);		    // 50ms
 
+#ifdef BAUD19200
 	// Configure USART @19200 Baud 8N1 (spbrg = (f_osc/(16*Baudrate))-1)
 	OpenUSART( USART_TX_INT_OFF & USART_RX_INT_ON & USART_BRGH_HIGH & USART_ASYNCH_MODE & USART_EIGHT_BIT & USART_CONT_RX,	25);
+#endif
  	putsUSART ((char*)anWelcomeString);
 
 	while(1)

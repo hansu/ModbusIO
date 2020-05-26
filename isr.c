@@ -18,12 +18,41 @@
 */
 
 #include "isr.h"
+#include <p18f2620.h>
 #include <usart.h>
-//#include <timers.h>
+#include <timers.h>
 #include <adc.h>
 #include <stdio.h>
+#include <GenericTypeDefs.h>
+#include "modbus.h"
 
 extern unsigned int anADCValues_RAW[];
+
+UINT8 nUARTIter = 0xFF;
+#pragma udata my_memory_section_1
+UINT8 anUARTBuf[UART_BUFFERSIZE];
+#pragma udata my_memory_section_2
+UINT8 anTxBuf[UART_BUFFERSIZE];
+
+
+void StartTimer1(void)
+{
+	T1CONbits.TMR1ON = 1;
+}
+void StopTimer1(void)
+{
+	T1CONbits.TMR1ON = 0;
+}
+
+void UART_Send(UINT8 *pData, UINT8 nLen)
+{
+	UINT8 ni;
+	for(ni=0; ni<nLen; ni++)
+	{
+		putcUSART(*(pData++));
+		while(BusyUSART());
+	}
+}
 
 #pragma code isr=0x08
 #pragma interrupt isr
@@ -32,24 +61,66 @@ void isr(void)
   	// Timer 0
 	if(INTCONbits.TMR0IF)
 	{
+	//	char anTxBuf[20];
 
 	//	ConvertADC();	        // Start conversion
 	//	while(BusyADC());
 	//	U_adc = ReadADC();
 
-		INTCONbits.TMR0IF = 0;  // clear Interrupt flag
+//		anADCValues_RAW[0] = ReadADC();
+//		sprintf(anTxBuf, "ADC0=%04d %X\r\n", anADCValues_RAW[0], PORTB & 0x01);
+//	    putsUSART(anTxBuf);
+
+		INTCONbits.TMR0IF = 0; //clear Interrupt flag
+	}
+
+  	//Timer 1 - Timeout -> Anfrage beantworten
+	if(PIR1bits.TMR1IF)
+	{
+		UINT16 nCRC16;
+		//CloseTimer1();
+		StopTimer1();
+		nUARTIter = 0; // Bereit machen fuer neue Daten
+		
+		anTxBuf[0] = 240;  	// Adresse
+		anTxBuf[1] = MODBUS_READ_HOLDING;
+		anTxBuf[2] = 2;  	// Laenge in Bytes
+		anTxBuf[3] = 0x15;  // Wert
+		anTxBuf[4] = 0xCA;	// Wert
+		nCRC16 = CRC16(&anTxBuf[0], 5);
+		anTxBuf[5] = (UINT8)(nCRC16&0xFF);
+		anTxBuf[6] = (UINT8)(nCRC16>>8);
+    
+		UART_Send(anTxBuf, 7);
+
+		PIR1bits.TMR1IF = 0; // clear Interrupt flag
 	}
 
 	// RS232 reception
 	if(PIR1bits.RCIF)
 	{
-		char anTxBuf[20];
-		ReadUSART();
+		if(nUARTIter < UART_BUFFERSIZE)
+			anUARTBuf[nUARTIter++] = ReadUSART();
+		else
+			ReadUSART();
 
-		anADCValues_RAW[0] = ReadADC();
-		sprintf(anTxBuf, "ADC0=%04d %X\r\n", anADCValues_RAW[0], PORTB & 0x01);
-	    putsUSART(anTxBuf);
-	
+		// Restart time-out counter at every reception
+		
+		WriteTimer1(0xFFFF-1700);
+		StartTimer1();
+
+		if(RCSTAbits.OERR)
+		{
+			RCSTAbits.CREN = 0;
+			Nop();
+			RCSTAbits.CREN = 1;
+		}
+
+		if(RCSTAbits.FERR)
+		{
+			ReadUSART();
+		}
+
 		PIR1bits.RCIF=0;
 	}
 //		PIR1 = 0;
