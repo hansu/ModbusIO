@@ -25,6 +25,7 @@
 #include <adc.h>
 #include "delay_user.h"
 #include <stdio.h>
+#include "modbus.h"
 
  /** Configuration ********************************************************/
 #pragma		config	OSC = INTIO67
@@ -72,7 +73,6 @@ void main(void)
 //	PIE2 = 0;
 //	PIE1bits.RCIE = 1;			// Enables the EUSART receive interrupt
 
-
 	// T0_PS_1_32 = 1.05 s
 
 	OpenTimer0(TIMER_INT_ON & T0_16BIT & T0_SOURCE_INT & T0_PS_1_32);
@@ -93,7 +93,8 @@ void main(void)
 				ADC_4ANA);
 		ConvertADC();	        // Start conversion
 		while(BusyADC());
-
+		anModbus_HoldingRegister[0] = ReadADC();
+		Delayms(10);
 		Delayx100ms(10);
 	}
 

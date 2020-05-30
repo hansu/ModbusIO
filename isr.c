@@ -34,94 +34,82 @@ UINT8 anUARTBuf[UART_BUFFERSIZE];
 #pragma udata my_memory_section_2
 UINT8 anTxBuf[UART_BUFFERSIZE];
 
+void UART_Send(UINT8 *pData, UINT8 nLen);
 
 void StartTimer1(void)
 {
-	T1CONbits.TMR1ON = 1;
+  T1CONbits.TMR1ON = 1;
 }
 void StopTimer1(void)
 {
-	T1CONbits.TMR1ON = 0;
+  T1CONbits.TMR1ON = 0;
 }
 
 void UART_Send(UINT8 *pData, UINT8 nLen)
 {
-	UINT8 ni;
-	for(ni=0; ni<nLen; ni++)
-	{
-		putcUSART(*(pData++));
-		while(BusyUSART());
-	}
+  UINT8 ni;
+  for(ni=0; ni<nLen; ni++)
+  {
+    putcUSART(*(pData++));
+    while(BusyUSART());
+  }
 }
 
 #pragma code isr=0x08
 #pragma interrupt isr
 void isr(void)
 {
-  	// Timer 0
-	if(INTCONbits.TMR0IF)
-	{
-	//	char anTxBuf[20];
+  // Timer 0
+  if(INTCONbits.TMR0IF)
+  {
+    // ConvertADC();   // Start conversion
+    // while(BusyADC());
+    // U_adc = ReadADC();
 
-	//	ConvertADC();	        // Start conversion
-	//	while(BusyADC());
-	//	U_adc = ReadADC();
+    // anADCValues_RAW[0] = ReadADC();
+    // sprintf(anTxBuf, "ADC0=%04d %X\r\n", anADCValues_RAW[0], PORTB & 0x01);
+    // putsUSART(anTxBuf);
 
-//		anADCValues_RAW[0] = ReadADC();
-//		sprintf(anTxBuf, "ADC0=%04d %X\r\n", anADCValues_RAW[0], PORTB & 0x01);
-//	    putsUSART(anTxBuf);
+    INTCONbits.TMR0IF = 0; // Clear Interrupt flag
+  }
 
-		INTCONbits.TMR0IF = 0; //clear Interrupt flag
-	}
+    // Timer 1 - Timeout -> answer request
+  if(PIR1bits.TMR1IF)
+  {
+    UINT16 nCRC16;
+    StopTimer1();
+    nUARTIter = 0;       // Get ready for new data
+    Modbus_Parse(anUARTBuf);
 
-  	//Timer 1 - Timeout -> Anfrage beantworten
-	if(PIR1bits.TMR1IF)
-	{
-		UINT16 nCRC16;
-		//CloseTimer1();
-		StopTimer1();
-		nUARTIter = 0; // Bereit machen fuer neue Daten
-		
-		anTxBuf[0] = 240;  	// Adresse
-		anTxBuf[1] = MODBUS_READ_HOLDING;
-		anTxBuf[2] = 2;  	// Laenge in Bytes
-		anTxBuf[3] = 0x15;  // Wert
-		anTxBuf[4] = 0xCA;	// Wert
-		nCRC16 = CRC16(&anTxBuf[0], 5);
-		anTxBuf[5] = (UINT8)(nCRC16&0xFF);
-		anTxBuf[6] = (UINT8)(nCRC16>>8);
-    
-		UART_Send(anTxBuf, 7);
+    PIR1bits.TMR1IF = 0; // Clear Interrupt flag
+  }
 
-		PIR1bits.TMR1IF = 0; // clear Interrupt flag
-	}
+  // RS232 reception
+  if(PIR1bits.RCIF)
+  {
+    if(nUARTIter < UART_BUFFERSIZE)
+      anUARTBuf[nUARTIter++] = ReadUSART();
+    else
+      ReadUSART();
 
-	// RS232 reception
-	if(PIR1bits.RCIF)
-	{
-		if(nUARTIter < UART_BUFFERSIZE)
-			anUARTBuf[nUARTIter++] = ReadUSART();
-		else
-			ReadUSART();
+    // Restart time-out counter at every reception
+    WriteTimer1(0xFFFF-1700);
+    StartTimer1();
 
-		// Restart time-out counter at every reception
-		
-		WriteTimer1(0xFFFF-1700);
-		StartTimer1();
+    if(RCSTAbits.OERR)
+    {
+      RCSTAbits.CREN = 0;
+      Nop();
+      RCSTAbits.CREN = 1;
+    }
 
-		if(RCSTAbits.OERR)
-		{
-			RCSTAbits.CREN = 0;
-			Nop();
-			RCSTAbits.CREN = 1;
-		}
+    if(RCSTAbits.FERR)
+    {
+      ReadUSART();
+    }
 
-		if(RCSTAbits.FERR)
-		{
-			ReadUSART();
-		}
+    PIR1bits.RCIF=0;
+  }
+// PIR1 = 0;
 
-		PIR1bits.RCIF=0;
-	}
-//		PIR1 = 0;
 }
