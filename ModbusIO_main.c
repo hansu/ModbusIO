@@ -94,6 +94,10 @@ void main(void)
 		ConvertADC();	        // Start conversion
 		while(BusyADC());
 		anModbus_HoldingRegister[0] = ReadADC();
+		anModbus_HoldingRegister[1] = 2000;
+		anModbus_HoldingRegister[2] = 3000;
+		anModbus_HoldingRegister[3] = 4000;
+
 		Delayms(10);
 		Delayx100ms(10);
 	}

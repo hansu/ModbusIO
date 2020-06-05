@@ -22,9 +22,10 @@
 #include <usart.h>
 
 UINT8 nDeviceID_gl = 240;
-UINT16 anModbus_HoldingRegister[4];
+UINT16 anModbus_HoldingRegister[MDB_NUM_HOLDINGREG];
 UINT8 bModbus_Coils;
-UINT8 nModbus_TxBuffer[20];
+extern UINT8 anUARTRxBuf[];
+extern UINT8 anUARTTxBuf[];
 
 void UART_Send(UINT8 *pData, UINT8 nLen);
 
@@ -52,38 +53,54 @@ UINT16 CRC16(UINT8 *buffer, UINT8 count)
       }
     }
   }
+/*
   ni=bCRC;
   bCRC>>=8;
   bCRC|=(UINT16)ni<<8;
+*/
   return (bCRC);
 }
 
-UINT8 Modbus_Parse(UINT8 *pModbusPacket)
+
+
+UINT8 Modbus_Parse(UINT8 *pRxPacket, UINT8 *pTxPacket)
 {
   UINT16 nHoldingReg, nLen, nCRC16, nCRC16_Rx;
-  if(pModbusPacket[0] != nDeviceID_gl)
+  UINT8 ni, nDataBytes;
+  if(pRxPacket[0] != nDeviceID_gl)
     return MODBUS_ERR_NO_EXCEPTION;
-  switch(pModbusPacket[1])
+  switch(pRxPacket[1])
   {
     case MODBUS_READ_HOLDING:
-      anTxBuf[0] = nDeviceID_gl;
-      anTxBuf[1] = MODBUS_READ_HOLDING;
-      anTxBuf[2] = 2; //Length in Bytes
-      nHoldingReg = ((UINT16)pModbusPacket[2])<<8;
-      nHoldingReg += (UINT16)pModbusPacket[3];
-      nLen = ((UINT16)pModbusPacket[4])<<8;
-      nLen += (UINT16)pModbusPacket[5];
-      anTxBuf[3] = (UINT8)(anModbus_HoldingRegister[nHoldingReg]>>8);
-      anTxBuf[4] = (UINT8)(anModbus_HoldingRegister[nHoldingReg]&0xFF);
-      nCRC16_Rx  = ((UINT16)pModbusPacket[6])<<8;
-      nCRC16_Rx += (UINT16)pModbusPacket[7];
-      nCRC16 = CRC16(pModbusPacket, 6);
+      nHoldingReg = ((UINT16)pRxPacket[2])<<8;
+      nHoldingReg += (UINT16)pRxPacket[3];
+      // Number of registers to read
+      nLen = ((UINT16)pRxPacket[4])<<8;
+      nLen += (UINT16)pRxPacket[5];
+
+      if((nHoldingReg+nLen) > MDB_NUM_HOLDINGREG){
+        return 1;
+      }
+      nCRC16_Rx  = ((UINT16)pRxPacket[7])<<8;
+      nCRC16_Rx += (UINT16)pRxPacket[6];
+      nCRC16 = CRC16(pRxPacket, 6);
       if(nCRC16 != nCRC16_Rx)
         return 1;
-      nCRC16 = CRC16(&anTxBuf[0], 5);
-      anTxBuf[5] = (UINT8)(nCRC16>>8);
-      anTxBuf[6] = (UINT8)(nCRC16&0xFF);
-      UART_Send(anTxBuf, 7);
+
+      pTxPacket[0] = nDeviceID_gl;
+      pTxPacket[1] = MODBUS_READ_HOLDING;
+      // Length in Bytes
+      pTxPacket[2] = (UINT8)(nLen<<1);
+      nDataBytes=0;
+      for(ni=(UINT8)nHoldingReg; ni<(nHoldingReg+nLen); ni++){
+        pTxPacket[3+nDataBytes] = (UINT8)(anModbus_HoldingRegister[ni]>>8);
+        pTxPacket[4+nDataBytes] = (UINT8)(anModbus_HoldingRegister[ni]&0xFF);
+        nDataBytes+=2;
+      }
+      nCRC16 = CRC16(pTxPacket, 3+nDataBytes);
+      pTxPacket[3+nDataBytes] = (UINT8)(nCRC16&0xFF);
+      pTxPacket[4+nDataBytes] = (UINT8)(nCRC16>>8);
+      UART_Send(pTxPacket, 5+nDataBytes);
       break;
     default:
       return MODBUS_ERR_ILLEGAL_FUNCTION;

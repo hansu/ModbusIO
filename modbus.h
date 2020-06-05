@@ -29,7 +29,10 @@ extern UINT16 anModbus_HoldingRegister[];
 
 
 UINT16 CRC16(UINT8 *buffer, UINT8 count);
-UINT8 Modbus_Parse(UINT8 *pModbusPacket);
+UINT8 Modbus_Parse(UINT8 *pRxPacket, UINT8 *pTxPacket);
+
+
+#define MDB_NUM_HOLDINGREG 4
 
 
 #define MODBUS_READ_COIL                 0x01

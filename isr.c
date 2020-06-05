@@ -30,9 +30,9 @@ extern unsigned int anADCValues_RAW[];
 
 UINT8 nUARTIter = 0xFF;
 #pragma udata my_memory_section_1
-UINT8 anUARTBuf[UART_BUFFERSIZE];
+UINT8 anUARTRxBuf[UART_BUFFERSIZE];
 #pragma udata my_memory_section_2
-UINT8 anTxBuf[UART_BUFFERSIZE];
+UINT8 anUARTTxBuf[UART_BUFFERSIZE];
 
 void UART_Send(UINT8 *pData, UINT8 nLen);
 
@@ -88,7 +88,7 @@ void isr(void)
   if(PIR1bits.RCIF)
   {
     if(nUARTIter < UART_BUFFERSIZE)
-      anUARTBuf[nUARTIter++] = ReadUSART();
+      anUARTRxBuf[nUARTIter++] = ReadUSART();
     else
       ReadUSART();
 
