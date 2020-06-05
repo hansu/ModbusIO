@@ -79,7 +79,7 @@ void isr(void)
     UINT16 nCRC16;
     StopTimer1();
     nUARTIter = 0;       // Get ready for new data
-    Modbus_Parse(anUARTBuf);
+    Modbus_Parse(anUARTRxBuf, anUARTTxBuf);
 
     PIR1bits.TMR1IF = 0; // Clear Interrupt flag
   }

@@ -63,7 +63,7 @@ UINT16 CRC16(UINT8 *buffer, UINT8 count)
 
 
 
-UINT8 Modbus_Parse(UINT8 *pRxPacket, UINT8 *pTxPacket)
+UINT8 Modbus_Parse(UINT8 *pRxPacket, UINT8 *pTxPacket, void (*Send)(UINT8 *, UINT8))
 {
   UINT16 nHoldingReg, nLen, nCRC16, nCRC16_Rx;
   UINT8 ni, nDataBytes;
@@ -100,7 +100,7 @@ UINT8 Modbus_Parse(UINT8 *pRxPacket, UINT8 *pTxPacket)
       nCRC16 = CRC16(pTxPacket, 3+nDataBytes);
       pTxPacket[3+nDataBytes] = (UINT8)(nCRC16&0xFF);
       pTxPacket[4+nDataBytes] = (UINT8)(nCRC16>>8);
-      UART_Send(pTxPacket, 5+nDataBytes);
+      Send(pTxPacket, 5+nDataBytes);
       break;
     default:
       return MODBUS_ERR_ILLEGAL_FUNCTION;
