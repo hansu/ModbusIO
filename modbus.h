@@ -32,7 +32,7 @@ UINT16 CRC16(UINT8 *buffer, UINT8 count);
 UINT8 Modbus_Parse(UINT8 *pRxPacket, UINT8 *pTxPacket, void (*Send)(UINT8*, UINT8));
 
 
-#define MDB_NUM_HOLDINGREG               4
+#define MDB_NUM_HOLDINGREG               8
 #define MDB_NUM_COILS                    8
 
 #define MODBUS_READ_COIL                 0x01

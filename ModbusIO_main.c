@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include "modbus.h"
 
- /** Configuration ********************************************************/ 
+ /** Configuration ********************************************************/
 #pragma  config  OSC = INTIO67
 #pragma  config  PWRT = ON      // power up timer on
 #pragma  config  BOREN = OFF    // brown out detect
@@ -44,7 +44,7 @@
 
 
 typedef struct{
-  UINT16 anValuesAVG[32];
+  UINT16 anValuesAVG[16];
   UINT8 nIndexAVG;
   UINT32 nSum;
 } SMA_t;
@@ -54,6 +54,10 @@ UINT16 anADCValues_RAW[N_ADC_CHANNELS];
 SMA_t astAVGValues_0 = {{0}};
 #pragma udata my_memory_section_4
 SMA_t astAVGValues_1 = {{0}};
+#pragma udata my_memory_section_5
+SMA_t astAVGValues_2 = {{0}};
+#pragma udata my_memory_section_6
+SMA_t astAVGValues_3 = {{0}};
 
 #pragma udata
 
@@ -62,7 +66,7 @@ UINT16 MovingAVG(SMA_t *pstValues, UINT8 nNumber, UINT16 nInput)
   pstValues->nSum -= pstValues->anValuesAVG[pstValues->nIndexAVG];
   pstValues->anValuesAVG[pstValues->nIndexAVG] = nInput;
   pstValues->nSum += nInput;
-    
+
   if(pstValues->nIndexAVG < (nNumber-1))
     pstValues->nIndexAVG++;
   else
@@ -74,8 +78,6 @@ UINT16 MovingAVG(SMA_t *pstValues, UINT8 nNumber, UINT16 nInput)
       return pstValues->nSum >> 3;
     case 16:
       return pstValues->nSum >> 4;
-    case 32:
-      return pstValues->nSum >> 5;
   }
 }
 
@@ -107,12 +109,12 @@ void main(void)
   INTCONbits.PEIE = 1;    //global interrupts enable
 //  PIE2 = 0;
 //  PIE1bits.RCIE = 1;      //Enables the EUSART receive interrupt
-  
+
 
   // T0_PS_1_32 = 1.05 s
 
   OpenTimer0(TIMER_INT_ON & T0_16BIT & T0_SOURCE_INT & T0_PS_1_32);
-  OpenTimer1(TIMER_INT_ON & T1_16BIT_RW & T1_SOURCE_INT & T1_PS_1_2 & T1_OSC1EN_OFF);  
+  OpenTimer1(TIMER_INT_ON & T1_16BIT_RW & T1_SOURCE_INT & T1_PS_1_2 & T1_OSC1EN_OFF);
 
   Delay1KTCYx(100);    //50ms
 
@@ -129,17 +131,34 @@ void main(void)
     ConvertADC();
     while(BusyADC());
     anADCValues_RAW[0] = ReadADC();
+
     // Channel 1
     OpenADC(ADC_FOSC_16 & ADC_RIGHT_JUST & ADC_16_TAD, ADC_CH1 & ADC_INT_OFF & ADC_REF_VDD_VSS, ADC_4ANA);
     ConvertADC();
     while(BusyADC());
     anADCValues_RAW[1] = ReadADC();
-    anModbus_HoldingRegister[0] = anADCValues_RAW[0]*10;
-    anModbus_HoldingRegister[1] = MovingAVG(&astAVGValues_0, 4, anADCValues_RAW[0]*10);
-    anModbus_HoldingRegister[2] = MovingAVG(&astAVGValues_1, 8, anADCValues_RAW[0]*10);
-    anModbus_HoldingRegister[3] = MovingAVG(&astAVGValues_1, 16, anADCValues_RAW[0]*10);
+     // Channel 2
+    OpenADC(ADC_FOSC_16 & ADC_RIGHT_JUST & ADC_16_TAD, ADC_CH2 & ADC_INT_OFF & ADC_REF_VDD_VSS, ADC_4ANA);
+    ConvertADC();
+    while(BusyADC());
+    anADCValues_RAW[2] = ReadADC();
 
-    Delayms(1);
+    // Channel 3
+    OpenADC(ADC_FOSC_16 & ADC_RIGHT_JUST & ADC_16_TAD, ADC_CH3 & ADC_INT_OFF & ADC_REF_VDD_VSS, ADC_4ANA);
+    ConvertADC();
+    while(BusyADC());
+    anADCValues_RAW[3] = ReadADC();
+
+    anModbus_HoldingRegister[0] = MovingAVG(&astAVGValues_0, 16, anADCValues_RAW[0]*10);
+    anModbus_HoldingRegister[1] = MovingAVG(&astAVGValues_1, 16, anADCValues_RAW[1]*10);
+    anModbus_HoldingRegister[2] = MovingAVG(&astAVGValues_2, 16, anADCValues_RAW[2]*10);
+    anModbus_HoldingRegister[3] = MovingAVG(&astAVGValues_3, 16, anADCValues_RAW[3]*10);
+    anModbus_HoldingRegister[4] = anADCValues_RAW[0];
+    anModbus_HoldingRegister[5] = anADCValues_RAW[1];
+    anModbus_HoldingRegister[6] = anADCValues_RAW[2];
+    anModbus_HoldingRegister[7] = anADCValues_RAW[3];
+
+    Delayms(10);
   }
 
 }
