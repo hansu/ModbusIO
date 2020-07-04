@@ -44,13 +44,18 @@
 
 
 typedef struct{
-  UINT16 anValuesAVG[16];
+  UINT16 anValuesAVG[32];
   UINT8 nIndexAVG;
   UINT32 nSum;
 } SMA_t;
 
-SMA_t astAVGValues[N_ADC_CHANNELS] = {{{0}}};
 UINT16 anADCValues_RAW[N_ADC_CHANNELS];
+#pragma udata my_memory_section_3
+SMA_t astAVGValues_0 = {{0}};
+#pragma udata my_memory_section_4
+SMA_t astAVGValues_1 = {{0}};
+
+#pragma udata
 
 UINT16 MovingAVG(SMA_t *pstValues, UINT8 nNumber, UINT16 nInput)
 {
@@ -69,6 +74,8 @@ UINT16 MovingAVG(SMA_t *pstValues, UINT8 nNumber, UINT16 nInput)
       return pstValues->nSum >> 3;
     case 16:
       return pstValues->nSum >> 4;
+    case 32:
+      return pstValues->nSum >> 5;
   }
 }
 
@@ -127,9 +134,9 @@ void main(void)
     while(BusyADC());
     anADCValues_RAW[1] = ReadADC();
     anModbus_HoldingRegister[0] = anADCValues_RAW[0]*10;
-    anModbus_HoldingRegister[1] = MovingAVG(&astAVGValues[0], 4, anADCValues_RAW[0]*10);
-    anModbus_HoldingRegister[2] = MovingAVG(&astAVGValues[1], 8, anADCValues_RAW[0]*10);
-    anModbus_HoldingRegister[3] = MovingAVG(&astAVGValues[2], 16, anADCValues_RAW[0]*10);
+    anModbus_HoldingRegister[1] = MovingAVG(&astAVGValues_0, 4, anADCValues_RAW[0]*10);
+    anModbus_HoldingRegister[2] = MovingAVG(&astAVGValues_1, 8, anADCValues_RAW[0]*10);
+    anModbus_HoldingRegister[3] = MovingAVG(&astAVGValues_1, 16, anADCValues_RAW[0]*10);
 
     Delayms(1);
   }
