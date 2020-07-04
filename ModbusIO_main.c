@@ -84,13 +84,14 @@ void main(void)
 {
   const char anWelcomeString[] ={"ModbusIO starting...\r\n"};
   OSCTUNEbits.PLLEN=1;  //PLL enable
-  OSCCONbits.IRCF0=1;    //8 MHz clock
+  OSCCONbits.IRCF0=1;   //8 MHz clock
   OSCCONbits.IRCF1=1;
   OSCCONbits.IRCF2=1;
 
-  TRISA = 0xFF;      // Set to input
-  TRISC = 0b10000000;      // Set all to output except UART RX
-  TRISB = 0xFF;      // Set to input
+  TRISA = 0xFF;         // Set to input
+  TRISC = 0b10000000;   // Set all to output except UART RX
+  TRISB = 0xFF;         // Set to input
+  INTCON2bits.RBPU = 0; // enable PORTB pull-ups
 
 //  ADCON2 = 0b10110101;  //right, 16 TAD, FOSC/16
 //  ADCON1 = 0b00001011;  //PortA AD I/O

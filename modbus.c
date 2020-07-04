@@ -23,7 +23,7 @@
 
 UINT8 nDeviceID_gl = 240;
 UINT16 anModbus_HoldingRegister[MDB_NUM_HOLDINGREG];
-UINT8 bModbus_Coils;
+UINT8 bModbus_Coils[MDB_NUM_COILS/8];
 extern UINT8 anUARTRxBuf[];
 extern UINT8 anUARTTxBuf[];
 
@@ -61,12 +61,21 @@ UINT16 CRC16(UINT8 *buffer, UINT8 count)
   return (bCRC);
 }
 
-
+UINT8 GetCoil(UINT16 nCoilAddress){
+  if(nCoilAddress <= 8){
+    if(PORTB & (1<<nCoilAddress)) //(0x80>>nCoilAddress))
+      return 1;
+    else
+      return 0;
+  } else
+    return 0;
+}
 
 UINT8 Modbus_Parse(UINT8 *pRxPacket, UINT8 *pTxPacket, void (*Send)(UINT8 *, UINT8))
 {
   UINT16 nHoldingReg, nLen, nCRC16, nCRC16_Rx;
-  UINT8 ni, nDataBytes;
+  UINT16 nCoilAddr;
+  UINT16 ni, nDataBytes;
   if(pRxPacket[0] != nDeviceID_gl)
     return MODBUS_ERR_NO_EXCEPTION;
   switch(pRxPacket[1])
@@ -87,12 +96,13 @@ UINT8 Modbus_Parse(UINT8 *pRxPacket, UINT8 *pTxPacket, void (*Send)(UINT8 *, UIN
       if(nCRC16 != nCRC16_Rx)
         return 1;
 
+      // Response
       pTxPacket[0] = nDeviceID_gl;
       pTxPacket[1] = MODBUS_READ_HOLDING;
       // Length in Bytes
       pTxPacket[2] = (UINT8)(nLen<<1);
       nDataBytes=0;
-      for(ni=(UINT8)nHoldingReg; ni<(nHoldingReg+nLen); ni++){
+      for(ni=nHoldingReg; ni<(nHoldingReg+nLen); ni++){
         pTxPacket[3+nDataBytes] = (UINT8)(anModbus_HoldingRegister[ni]>>8);
         pTxPacket[4+nDataBytes] = (UINT8)(anModbus_HoldingRegister[ni]&0xFF);
         nDataBytes+=2;
@@ -102,6 +112,40 @@ UINT8 Modbus_Parse(UINT8 *pRxPacket, UINT8 *pTxPacket, void (*Send)(UINT8 *, UIN
       pTxPacket[4+nDataBytes] = (UINT8)(nCRC16>>8);
       Send(pTxPacket, 5+nDataBytes);
       break;
+
+    case MODBUS_READ_COIL:
+      nCoilAddr = ((UINT16)pRxPacket[2])<<8;
+      nCoilAddr += (UINT16)pRxPacket[3];
+      // Nuber of coils to read
+      nLen = ((UINT16)pRxPacket[4])<<8;
+      nLen += (UINT16)pRxPacket[5];
+
+      if((nCoilAddr+nLen) > MDB_NUM_COILS){
+        return 1;
+      }
+      nCRC16_Rx  = ((UINT16)pRxPacket[7])<<8;
+      nCRC16_Rx += (UINT16)pRxPacket[6];
+      nCRC16 = CRC16(pRxPacket, 6);
+      if(nCRC16 != nCRC16_Rx)
+        return 1;
+
+      // Response
+      pTxPacket[0] = nDeviceID_gl;
+      pTxPacket[1] = MODBUS_READ_HOLDING;
+      // Length in Bytes
+      if(nLen<=8){
+        nDataBytes=1;                // One byte data for 8 coils
+        pTxPacket[2] = nDataBytes;
+        pTxPacket[3] = 0;
+        for(ni=0; ni<nLen; ni++){
+          pTxPacket[3] |= GetCoil(nCoilAddr+ni) << ni;
+        }
+      }
+      nCRC16 = CRC16(pTxPacket, 3+nDataBytes);
+      pTxPacket[3+nDataBytes] = (UINT8)(nCRC16&0xFF);
+      pTxPacket[4+nDataBytes] = (UINT8)(nCRC16>>8);
+      Send(pTxPacket, 5+nDataBytes);
+
     default:
       return MODBUS_ERR_ILLEGAL_FUNCTION;
   }
