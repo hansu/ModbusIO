@@ -17,13 +17,25 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef __18CXX
 #include <p18f2620.h>
-#include <delays.h>
 #include <usart.h>
 #include <pwm.h>
 #include <timers.h>
 #include <adc.h>
-#include "delay_user.h"
+#include <delays.h>
+#include "delay_user.h"  
+#elif __XC8
+#include "p18cxxx.h"
+#include <stdint.h>
+#define UINT8 uint8_t
+#define UINT16 uint16_t
+#define XTAL_FREQ 8000000
+#define Delayms(ms) __delay_ms(ms)
+#else 
+#warning "compiler not supported"
+#endif
+#include "GenericTypeDefs.h"
 #include <stdio.h>
 #include "modbus.h"
 
@@ -116,7 +128,7 @@ void main(void)
   OpenTimer0(TIMER_INT_ON & T0_16BIT & T0_SOURCE_INT & T0_PS_1_32);
   OpenTimer1(TIMER_INT_ON & T1_16BIT_RW & T1_SOURCE_INT & T1_PS_1_2 & T1_OSC1EN_OFF);
 
-  Delay1KTCYx(100);    //50ms
+  Delayms(50)
 
 #ifdef BAUD19200
   // Configure USART @19200 Baud 8N1 (spbrg = (f_osc/(16*Baudrate))-1)

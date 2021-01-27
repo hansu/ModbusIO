@@ -18,12 +18,19 @@
 */
 
 #include "isr.h"
+#ifdef __18CXX
 #include <p18f2620.h>
 #include <usart.h>
 #include <timers.h>
 #include <adc.h>
+#elif __XC8
+#include "p18cxxx.h"
+#include <stdint.h>
+#else 
+#warning "compiler not supported"
+#endif
+#include "GenericTypeDefs.h"
 #include <stdio.h>
-#include <GenericTypeDefs.h>
 #include "modbus.h"
 
 extern unsigned int anADCValues_RAW[];

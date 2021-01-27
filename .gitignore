@@ -2,3 +2,5 @@
 *.map
 *.o
 *.cof
+*.hex
+/ModbusIO.X/build/

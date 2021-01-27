@@ -18,8 +18,16 @@
 */
 
 #include "delay_user.h"
-#include <delays.h>
+
+#ifdef __18CXX
 #include <usart.h>
+#include <delays.h>
+#elif __XC8
+
+#else 
+#warning "compiler not supported"
+#endif
+#include "GenericTypeDefs.h"
 
 
 void DelayFor18TCY( void )
