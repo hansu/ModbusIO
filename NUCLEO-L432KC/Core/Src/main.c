@@ -18,11 +18,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "stdio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdio.h"
+#include <string.h>
+#include "modbus.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,46 +64,56 @@ static void MX_USART1_UART_Init(void);
 #define UART_BUFFERSIZE 200
 uint16_t nUARTIter;
 uint8_t anUARTRxBuf[UART_BUFFERSIZE];
+uint8_t anUARTTxBuf[UART_BUFFERSIZE];
+extern uint16_t anModbus_HoldingRegister[MDB_NUM_HOLDINGREG];
+extern uint8_t bModbus_Coils[MDB_NUM_COILS/8];
 
 uint8_t ReadUSART ()
 {
-	return USART1->RDR;
+  return USART1->RDR;
+}
+
+void UartTransmit (uint8_t *data, uint8_t len)
+{
+  HAL_UART_Transmit(&huart1, (unsigned char*)data, (uint16_t)len, 100);
 }
 
 void UART1_RX_IRQ(UART_HandleTypeDef *huart)
 {
 
-	if (USART1->ISR & USART_ISR_RXNE) {
-		if(nUARTIter < UART_BUFFERSIZE) {
-			anUARTRxBuf[nUARTIter++] = ReadUSART();
-		} else {
-//			ReadUSART();
-			USART1->RQR |= USART_RQR_RXFRQ; // clear RXNE flag
-		}
+  if (USART1->ISR & USART_ISR_RXNE) {
+    if(nUARTIter < UART_BUFFERSIZE) {
+      anUARTRxBuf[nUARTIter++] = ReadUSART();
+    } else {
+//      ReadUSART();
+      USART1->RQR |= USART_RQR_RXFRQ; // clear RXNE flag
+    }
 
-	}
-	// Overrun error
-	if (USART1->ISR & USART_ISR_ORE) {
-		USART1->ICR |= USART_ICR_ORECF; // Reset overrun error
-		HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_SET);
-	}
+  }
+  // Overrun error
+  if (USART1->ISR & USART_ISR_ORE) {
+    USART1->ICR |= USART_ICR_ORECF; // Reset overrun error
+    HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_SET);
+  }
 
-	if (USART1->ISR & USART_ISR_EOBF) {
-		USART1->ICR |= USART_ICR_EOBCF; // clear end of block flag
-	}
+  if (USART1->ISR & USART_ISR_EOBF) {
+    USART1->ICR |= USART_ICR_EOBCF; // clear end of block flag
+  }
 
-	if (USART1->ISR & USART_ISR_RTOF) {
-		USART1->ICR |= USART_ICR_RTOCF; // clear receive timeout flag
-	    uint16_t nCRC16;
-	    nUARTIter = 0;       // Get ready for new data
-//	    Modbus_Parse(anUARTRxBuf, anUARTTxBuf);
-	    char sendBuf[40];
-	    sprintf(sendBuf, "Timer1 value: %ld\n", TIM1->CNT);
-		HAL_UART_Transmit(&huart1, (unsigned char*)sendBuf, strlen(sendBuf), 100);
-
-	}
+  if (USART1->ISR & USART_ISR_RTOF) {
+    USART1->ICR |= USART_ICR_RTOCF; // clear receive timeout flag
+      nUARTIter = 0;                // Get ready for new data
+      Modbus_Parse((uint8_t*)anUARTRxBuf, anUARTTxBuf, UartTransmit);
+  }
 
 }
+
+ uint8_t GetCoil(uint16_t nCoilAddress){
+   if(nCoilAddress <= 8)
+       return 1;
+   else
+       return 0;
+ }
 
 /* USER CODE END 0 */
 
@@ -138,15 +149,15 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);	// receive buffer not empty interrupt enable (USART_CR1_RXNEIE)
+  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);  // receive buffer not empty interrupt enable (USART_CR1_RXNEIE)
 
-  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RTO);	// receive timeout interrupt enable (USART_CR1_RTOIE)
+  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RTO);  // receive timeout interrupt enable (USART_CR1_RTOIE)
 
-  HAL_UART_EnableReceiverTimeout(&huart1);		// receive timeout enable (USART_CR2_RTOEN)
+  HAL_UART_EnableReceiverTimeout(&huart1);    // receive timeout enable (USART_CR2_RTOEN)
 
   HAL_UART_ReceiverTimeout_Config(&huart1, 22);
 
-  HAL_TIM_Encoder_Start(&htim1, 1);		 //TIM1->CR1 |= TIM_CR1_CEN;
+  HAL_TIM_Encoder_Start(&htim1, 1);     //TIM1->CR1 |= TIM_CR1_CEN;
 
   /* USER CODE END 2 */
 
@@ -154,13 +165,15 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
-	HAL_Delay(1000);
+//  HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
+  anModbus_HoldingRegister[0] = (uint8_t)TIM1->CNT;
+  anModbus_HoldingRegister[1] = (uint8_t)(((TIM1->CNT) >> 8) & 0xFF);
+    HAL_Delay(100);
   }
 
-   /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-  /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
   /* USER CODE END 3 */
 }
 
