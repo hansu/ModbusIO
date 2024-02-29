@@ -23,7 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include <string.h>
-#include "modbus.h"
+#include "../../../common/modbus.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
