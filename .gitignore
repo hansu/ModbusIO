@@ -2,5 +2,5 @@
 *.map
 *.o
 *.cof
-NUCLEO-L432KC/Debug/*
-NUCLEO-L432KC/.settings/*
+*/Debug/*
+*/.settings/*
