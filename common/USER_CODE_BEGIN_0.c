@@ -7,6 +7,7 @@ uint8_t anUARTRxBuf[UART_BUFFERSIZE];
 uint8_t anUARTTxBuf[UART_BUFFERSIZE];
 extern uint16_t anModbus_HoldingRegister[MDB_NUM_HOLDINGREG];
 extern uint8_t bModbus_Coils[MDB_NUM_COILS/8];
+uint16_t ADC1Values[4];
 
 uint8_t ReadUSART ()
 {

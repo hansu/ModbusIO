@@ -21,9 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "stdio.h"
-#include <string.h>
-#include "../../../common/modbus.h"
+#include "../../../common/USER_CODE_BEGIN_Includes.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,63 +63,7 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-#define UART_BUFFERSIZE 200
-uint16_t nUARTIter;
-uint8_t anUARTRxBuf[UART_BUFFERSIZE];
-uint8_t anUARTTxBuf[UART_BUFFERSIZE];
-extern uint16_t anModbus_HoldingRegister[MDB_NUM_HOLDINGREG];
-extern uint8_t bModbus_Coils[MDB_NUM_COILS/8];
-uint16_t ADC1Values[4];
-
-
-uint8_t ReadUSART ()
-{
-  return USART1->RDR;
-}
-
-void UartTransmit (uint8_t *data, uint8_t len)
-{
-  HAL_UART_Transmit(&huart1, (unsigned char*)data, (uint16_t)len, 100);
-}
-
-void UART1_RX_IRQ(UART_HandleTypeDef *huart)
-{
-
-  if (USART1->ISR & USART_ISR_RXNE) {
-    if(nUARTIter < UART_BUFFERSIZE) {
-      anUARTRxBuf[nUARTIter++] = ReadUSART();
-    } else {
-//      ReadUSART();
-      USART1->RQR |= USART_RQR_RXFRQ; // clear RXNE flag
-    }
-
-  }
-  // Overrun error
-  if (USART1->ISR & USART_ISR_ORE) {
-    USART1->ICR |= USART_ICR_ORECF; // Reset overrun error
-    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-  }
-
-  if (USART1->ISR & USART_ISR_EOBF) {
-    USART1->ICR |= USART_ICR_EOBCF; // clear end of block flag
-  }
-
-  if (USART1->ISR & USART_ISR_RTOF) {
-    USART1->ICR |= USART_ICR_RTOCF; // clear receive timeout flag
-      nUARTIter = 0;                // Get ready for new data
-      Modbus_Parse((uint8_t*)anUARTRxBuf, anUARTTxBuf, UartTransmit);
-  }
-
-}
-
- uint8_t GetCoil(uint16_t nCoilAddress){
-   if(nCoilAddress <= 8)
-       return 1;
-   else
-       return 0;
- }
-
+#include "../../../common/USER_CODE_BEGIN_0.c"
 /* USER CODE END 0 */
 
 /**
@@ -157,42 +99,12 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
-  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);  // receive buffer not empty interrupt enable (USART_CR1_RXNEIE)
-  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RTO);  // receive timeout interrupt enable (USART_CR1_RTOIE)
-  HAL_UART_EnableReceiverTimeout(&huart1);    // receive timeout enable (USART_CR2_RTOEN)
-  HAL_UART_ReceiverTimeout_Config(&huart1, 22);
-  HAL_TIM_Encoder_Start(&htim2, 1);     //TIM1->CR1 |= TIM_CR1_CEN;
-
-  hdma_adc1.Instance = DMA1_Channel1;
-//  hdma_adc1.Init.Request = DMA_REQUEST_0;
-//  hdma_adc1.Init.Direction = DMA_PERIPH_TO_MEMORY;
-//  hdma_adc1.Init.PeriphInc = DMA_PINC_DISABLE;
-//  hdma_adc1.Init.MemInc = DMA_MINC_ENABLE;
-//  hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-//  hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-  hdma_adc1.Init.Mode = DMA_CIRCULAR;
-//  hdma_adc1.Init.Priority = DMA_PRIORITY_LOW;
-  HAL_DMA_Init(&hdma_adc1);
-
-
-//  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
-	HAL_ADC_Start_DMA(&hadc1, (uint16_t*)&anModbus_HoldingRegister[0], 4);
-
-
+  #include "../../../common/USER_CODE_BEGIN_2.c"
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-//  HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
-//  anModbus_HoldingRegister[0] = (uint8_t)TIM2->CNT;
-//  anModbus_HoldingRegister[1] = (uint8_t)(((TIM2->CNT) >> 8) & 0xFF);
-  anModbus_HoldingRegister[4] = (uint8_t)TIM2->CNT;
-    HAL_Delay(100);
-  }
-
+  #include "../../../common/USER_CODE_BEGIN_WHILE.c"
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -461,7 +373,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -477,12 +389,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LED_Pin */
-  GPIO_InitStruct.Pin = LED_Pin;
+  /*Configure GPIO pin : LED3_Pin */
+  GPIO_InitStruct.Pin = LED3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(LED3_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB0 PB1 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
