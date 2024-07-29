@@ -9,57 +9,13 @@
 
   HAL_UART_ReceiverTimeout_Config(&huart1, 22);
 
+//#if defined(STM32L432xx)
+//#elif defined(STM32L476xx)
+//#elif defined(STM32F303xE)
+//#endif
 
-#if defined(STM32L432xx)
 	HAL_TIM_Encoder_Start(&htim2, 1);     //TIM1->CR1 |= TIM_CR1_CEN;
-
-  hdma_adc1.Instance = DMA1_Channel1;
-//  hdma_adc1.Init.Request = DMA_REQUEST_0;
-//  hdma_adc1.Init.Direction = DMA_PERIPH_TO_MEMORY;
-//  hdma_adc1.Init.PeriphInc = DMA_PINC_DISABLE;
-//  hdma_adc1.Init.MemInc = DMA_MINC_ENABLE;
-//  hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-//  hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-  hdma_adc1.Init.Mode = DMA_CIRCULAR;
-//  hdma_adc1.Init.Priority = DMA_PRIORITY_LOW;
-  HAL_DMA_Init(&hdma_adc1);
-
-#elif defined(STM32L476xx)
-
-    HAL_TIM_Encoder_Start(&htim2, 1);     //TIM1->CR1 |= TIM_CR1_CEN;
-
-  hdma_adc1.Instance = DMA1_Channel1;
-//  hdma_adc1.Init.Request = DMA_REQUEST_0;
-//  hdma_adc1.Init.Direction = DMA_PERIPH_TO_MEMORY;
-//  hdma_adc1.Init.PeriphInc = DMA_PINC_DISABLE;
-//  hdma_adc1.Init.MemInc = DMA_MINC_ENABLE;
-//  hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-//  hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-  hdma_adc1.Init.Mode = DMA_CIRCULAR;
-//  hdma_adc1.Init.Priority = DMA_PRIORITY_LOW;
-  HAL_DMA_Init(&hdma_adc1);
-
 
 //  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 	HAL_ADC_Start_DMA(&hadc1, (uint16_t*)&anModbus_HoldingRegister[0], 4);
 
-#elif defined(STM32F303xE)
-
-	HAL_TIM_Encoder_Start(&htim2, 1);     //TIM1->CR1 |= TIM_CR1_CEN;
-
-	hdma_adc1.Instance = DMA1_Channel1;
-	//  hdma_adc1.Init.Request = DMA_REQUEST_0;
-	//  hdma_adc1.Init.Direction = DMA_PERIPH_TO_MEMORY;
-	//  hdma_adc1.Init.PeriphInc = DMA_PINC_DISABLE;
-	//  hdma_adc1.Init.MemInc = DMA_MINC_ENABLE;
-	//  hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-	//  hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-	hdma_adc1.Init.Mode = DMA_CIRCULAR;
-	//  hdma_adc1.Init.Priority = DMA_PRIORITY_LOW;
-	HAL_DMA_Init(&hdma_adc1);
-
-
-//  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
-	HAL_ADC_Start_DMA(&hadc1, (uint16_t*)&anModbus_HoldingRegister[0], 4);
-
-#endif
