@@ -11,8 +11,18 @@
 
 
 #if defined(STM32L432xx)
-    HAL_TIM_Encoder_Start(&htim1, 1);     //TIM1->CR1 |= TIM_CR1_CEN;
+	HAL_TIM_Encoder_Start(&htim2, 1);     //TIM1->CR1 |= TIM_CR1_CEN;
 
+  hdma_adc1.Instance = DMA1_Channel1;
+//  hdma_adc1.Init.Request = DMA_REQUEST_0;
+//  hdma_adc1.Init.Direction = DMA_PERIPH_TO_MEMORY;
+//  hdma_adc1.Init.PeriphInc = DMA_PINC_DISABLE;
+//  hdma_adc1.Init.MemInc = DMA_MINC_ENABLE;
+//  hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+//  hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+  hdma_adc1.Init.Mode = DMA_CIRCULAR;
+//  hdma_adc1.Init.Priority = DMA_PRIORITY_LOW;
+  HAL_DMA_Init(&hdma_adc1);
 
 #elif defined(STM32L476xx)
 
