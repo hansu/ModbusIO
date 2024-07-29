@@ -22,6 +22,7 @@
 #include "stm32f3xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+void UART1_RX_IRQ(UART_HandleTypeDef *huart);
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,7 +57,6 @@
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc1;
-extern ADC_HandleTypeDef hadc1;
 extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
 
@@ -215,28 +215,14 @@ void DMA1_Channel1_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles ADC1 and ADC2 interrupts.
-  */
-void ADC1_2_IRQHandler(void)
-{
-  /* USER CODE BEGIN ADC1_2_IRQn 0 */
-
-  /* USER CODE END ADC1_2_IRQn 0 */
-  HAL_ADC_IRQHandler(&hadc1);
-  /* USER CODE BEGIN ADC1_2_IRQn 1 */
-
-  /* USER CODE END ADC1_2_IRQn 1 */
-}
-
-/**
   * @brief This function handles USART1 global interrupt / USART1 wake-up interrupt through EXTI line 25.
   */
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-
+  UART1_RX_IRQ(&huart1);
   /* USER CODE END USART1_IRQn 0 */
-  HAL_UART_IRQHandler(&huart1);
+  // HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
 
   /* USER CODE END USART1_IRQn 1 */
