@@ -56,7 +56,6 @@ void UART1_RX_IRQ(UART_HandleTypeDef *huart);
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc1;
-extern ADC_HandleTypeDef hadc1;
 extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
 
@@ -212,32 +211,6 @@ void DMA1_Channel1_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
 // do filtering here
   /* USER CODE END DMA1_Channel1_IRQn 1 */
-}
-
-/**
-  * @brief This function handles ADC1 and ADC2 interrupts.
-  */
-void ADC1_2_IRQHandler(void)
-{
-  /* USER CODE BEGIN ADC1_2_IRQn 0 */
-
-  /* USER CODE END ADC1_2_IRQn 0 */
-  /* USER CODE BEGIN ADC1_2_IRQn 1 */
-//  static uint8_t nChanCtr = 0;
-//  uint16_t nAdcVal[4];
-//
-//  nAdcVal[nChanCtr] =  HAL_ADC_GetValue(&hadc1);
-//  if (nChanCtr < 3) {
-//	  nChanCtr++;
-//  }
-//  if (ADC1->ISR & ADC_ISR_EOS) {
-//	  nChanCtr = 0;
-//  }
-//  ADC1->ISR |= ADC_ISR_OVR; // Clear OVR
-//  ADC1->ISR |= ADC_ISR_EOC; // Clear
-//  ADC1->ISR |= ADC_ISR_EOS; // Clear
-
-  /* USER CODE END ADC1_2_IRQn 1 */
 }
 
 /**
