@@ -29,8 +29,8 @@ void UartTransmit(uint8_t *data, uint8_t len)
  */
 uint8_t GetCoil(uint16_t nCoilAddress)
 {
-    if (nCoilAddress <= 8) {
-        return 1;
+    if (nCoilAddress < 16) {
+        return HAL_GPIO_ReadPin(GPIOB, 1 << nCoilAddress);
     } else {
         return 0;
     }
@@ -96,4 +96,18 @@ void MainLoop(void)
 #endif
         HAL_Delay(100);
     }
+}
+
+/*
+ * Attention:
+ * @param: GPIO_Pin is a bit mask,
+ */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if(GPIO_Pin & (uint16_t)(1 << 0)){
+		anModbus_HoldingRegister[6] = HAL_GPIO_ReadPin(GPIOB, GPIO_Pin);
+	}
+    // TODO: debouncing for buttons
+
+
 }
