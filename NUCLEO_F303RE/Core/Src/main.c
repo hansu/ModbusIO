@@ -21,7 +21,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "../../../common/USER_CODE_BEGIN_Includes.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,7 +62,8 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#include "../../../common/USER_CODE_BEGIN_0.c"
+void StartPeripherals(void);
+void MainLoop(void);
 /* USER CODE END 0 */
 
 /**
@@ -99,12 +99,12 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  #include "../../../common/USER_CODE_BEGIN_2.c"
+  StartPeripherals();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  #include "../../../common/USER_CODE_BEGIN_WHILE.c"
+  MainLoop();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
