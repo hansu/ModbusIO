@@ -20,7 +20,7 @@
 
 #include "modbus.h"
 
-uint8_t nDeviceID_gl = 240;
+uint8_t nDeviceID_gl = MDB_DEFAULT_ADDRESS;
 uint16_t anModbus_HoldingRegister[MDB_NUM_HOLDINGREG];
 uint8_t bModbus_Coils[MDB_NUM_COILS/8];
 extern uint8_t anUARTRxBuf[];

@@ -33,6 +33,7 @@ uint16_t CRC16(uint8_t *buffer, uint8_t count);
 uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_t *, uint8_t));
 
 
+#define MDB_DEFAULT_ADDRESS              1
 #define MDB_NUM_HOLDINGREG               8
 #define MDB_NUM_COILS                    8
 
@@ -40,9 +41,9 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
 #define MODBUS_READ_STATUS_INPUTS        0x02
 #define MODBUS_READ_HOLDING              0x03
 #define MODBUS_READ_INPUT_REGISTERS      0x04
-#define MODBUS_SET_COIL                  0x05
-#define MODBUS_SET_SINGLE_REGISTER       0x06
-#define MODBUS_SET_MULTIPLE_COILS        0x0F
+#define MODBUS_WRITE_SINGLE_COIL         0x05
+#define MODBUS_WRITE_SINGLE_REGISTER     0x06
+#define MODBUS_WRITE_MULTIPLE_COILS      0x0F
 #define MODBUS_WRITE_MULTIPLE_HOLDING    0x10
 
 
