@@ -68,14 +68,20 @@ void UART1_RX_IRQ(UART_HandleTypeDef *huart)
 
 void StartPeripherals(void)
 {
-    __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE); // receive buffer not empty interrupt enable (USART_CR1_RXNEIE)
+	// Interrupt for single character reception
+	//    UART_Start_Receive_IT(&huart1, anUARTRxBuf, ?);
+	__HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE); // receive buffer not empty interrupt enable (USART_CR1_RXNEIE)
+
+    // Interrupt for end of block
     __HAL_UART_ENABLE_IT(&huart1, UART_IT_RTO); // receive timeout interrupt enable (USART_CR1_RTOIE)
-    HAL_UART_EnableReceiverTimeout(&huart1); // receive timeout enable (USART_CR2_RTOEN)
-    HAL_UART_ReceiverTimeout_Config(&huart1, 22);
+
+	HAL_UART_ReceiverTimeout_Config(&huart1, 22);
+	HAL_UART_EnableReceiverTimeout(&huart1); // receive timeout enable (USART_CR2_RTOEN)
 
     HAL_TIM_Encoder_Start(&htim2, 1); // TIM1->CR1 |= TIM_CR1_CEN;
     //  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
-    HAL_ADC_Start_DMA(&hadc1, (uint16_t *)&anModbus_HoldingRegister[0], 4);
+    // anModbus_HoldingRegister[0..1] are reserved for encoder
+    HAL_ADC_Start_DMA(&hadc1, (uint16_t *)&anModbus_HoldingRegister[2], 4);
 }
 
 void MainLoop(void)
@@ -83,18 +89,11 @@ void MainLoop(void)
     while (1)
     {
 //  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-#if defined(STM32L476xx)
-        //  anModbus_HoldingRegister[0] = (uint8_t)TIM2->CNT;
-        //  anModbus_HoldingRegister[1] = (uint8_t)(((TIM2->CNT) >> 8) & 0xFF);
-        anModbus_HoldingRegister[4] = (uint8_t)TIM2->CNT;
-#elif defined(STM32L432xx)
-        anModbus_HoldingRegister[0] = (uint8_t)TIM1->CNT;
-        anModbus_HoldingRegister[1] = (uint8_t)(((TIM1->CNT) >> 8) & 0xFF);
-#elif defined(STM32F303xE)
-//  anModbus_HoldingRegister[0] = (uint8_t)TIM1->CNT;
-//  anModbus_HoldingRegister[1] = (uint8_t)(((TIM1->CNT) >> 8) & 0xFF);
+#if defined(STM32L476xx) || defined(STM32L432xx) || defined(STM32F303xE)
+        anModbus_HoldingRegister[0] = (uint8_t)TIM2->CNT;
+        anModbus_HoldingRegister[1] = (uint8_t)(((TIM2->CNT) >> 8) & 0xFF);
 #endif
-        HAL_Delay(100);
+        HAL_Delay(10);
     }
 }
 
