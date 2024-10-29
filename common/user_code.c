@@ -36,6 +36,20 @@ uint8_t GetCoil(uint16_t nCoilAddress)
     }
 }
 
+/*
+ * Interface function for modbus
+ */
+uint8_t SetCoil(uint16_t nCoilAddress, uint8_t value)
+{
+    if (nCoilAddress < 10) { // TODO insert variable limit
+        HAL_GPIO_WritePin(GPIOC, 1 << (nCoilAddress+4), value);
+        return 0;
+    } else {
+        return -1;
+    }
+
+}
+
 uint8_t ReadUSART()
 {
     return USART1->RDR;

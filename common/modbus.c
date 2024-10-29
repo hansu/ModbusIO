@@ -61,8 +61,9 @@ uint16_t CRC16(uint8_t *buffer, uint8_t count)
 
 uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_t *, uint8_t))
 {
-  uint16_t nAddr, nLen, nCRC16, nCRC16_Rx;
-  uint16_t ni, nDataBytes;
+  uint16_t nAddr; // Register address
+  uint16_t nLen, nCRC16, nCRC16_Rx;
+  uint16_t ni, nDataBytes, nData;
   if(pRxPacket[0] != nDeviceID_gl)
     return MODBUS_ERR_NO_EXCEPTION;
 
@@ -133,6 +134,29 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       pTxPacket[3+nDataBytes] = (uint8_t)(nCRC16&0xFF);
       pTxPacket[4+nDataBytes] = (uint8_t)(nCRC16>>8);
       Send(pTxPacket, 5+nDataBytes);
+      return MODBUS_ERR_NO_EXCEPTION;
+  
+    case MODBUS_WRITE_SINGLE_COIL:
+      nAddr = ((uint16_t)pRxPacket[2])<<8;
+      nAddr += (uint16_t)pRxPacket[3];
+
+      // Check CRC
+      nCRC16_Rx  = ((uint16_t)pRxPacket[7])<<8;
+      nCRC16_Rx += (uint16_t)pRxPacket[6];
+      nCRC16 = CRC16(pRxPacket, 6);
+      if(nCRC16 != nCRC16_Rx)
+        return MODBUS_ERR_NEGATIVE_ACKNOWLEDGE;
+
+      // Write data
+      nData = ((uint16_t)pRxPacket[4])<<8;
+      nData += (uint16_t)pRxPacket[5];
+
+      if(SetCoil(nAddr, (nData==0xFF00)?1:0)) {
+        return MODBUS_ERR_ILLEGAL_DATA_VALUE;
+      }
+
+      // Response : echo of the request
+      Send(pRxPacket, 8);
       return MODBUS_ERR_NO_EXCEPTION;
 
     case MODBUS_READ_STATUS_INPUTS:
