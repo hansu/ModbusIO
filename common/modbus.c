@@ -25,7 +25,6 @@ uint16_t anModbus_HoldingRegister[MDB_NUM_HOLDINGREG];
 uint8_t bModbus_Coils[MDB_NUM_COILS/8];
 extern uint8_t anUARTRxBuf[];
 extern uint8_t anUARTTxBuf[];
-uint8_t GetCoil(uint16_t nCoilAddress);
 
 
 /*
@@ -59,16 +58,6 @@ uint16_t CRC16(uint8_t *buffer, uint8_t count)
 */
   return (bCRC);
 }
-
-// uint8_t GetCoil(uint16_t nCoilAddress){
-//   if(nCoilAddress <= 8){
-//     if(PORTB & (1<<nCoilAddress)) //(0x80>>nCoilAddress))
-//       return 1;
-//     else
-//       return 0;
-//   } else
-//     return 0;
-// }
 
 uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_t *, uint8_t))
 {

@@ -27,6 +27,7 @@ extern  uint8_t nDeviceID_gl;
 extern uint8_t anTxBuf[];
 extern uint16_t anModbus_HoldingRegister[];
 void Send(uint8_t *pData, uint8_t nLen);
+uint8_t GetCoil(uint16_t nCoilAddress);
 
 
 uint16_t CRC16(uint8_t *buffer, uint8_t count);
