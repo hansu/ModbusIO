@@ -28,17 +28,22 @@ extern uint8_t anTxBuf[];
 extern uint16_t anModbus_HoldingRegister[];
 void Send(uint8_t *pData, uint8_t nLen);
 uint8_t GetCoil(uint16_t nCoilAddress);
-uint8_t SetCoil(uint16_t nCoilAddress, uint8_t value);
-
+int8_t SetCoil(uint16_t nCoilAddress, uint8_t value);
+void SetMultipleCoils(uint16_t bitMask, uint16_t data);
 
 uint16_t CRC16(uint8_t *buffer, uint8_t count);
 uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_t *, uint8_t));
 
 
-#define MDB_DEFAULT_ADDRESS              1
-#define MDB_NUM_HOLDINGREG               8
-#define MDB_NUM_COILS                    8
+#define MDB_DEFAULT_DEVICE_ID            1
+#define MDB_NUM_HOLDINGREG               6
+#define MDB_NUM_OUTPUT_COIL              10
+#define MDB_NUM_INPUT_COIL               16
+#define MDB_ADDR_FIRST_HOLDINGREG        0
+#define MDB_ADDR_FIRST_OUTPUT_COIL       0
+#define MDB_ADDR_FIRST_INPUT_COIL        10
 
+// Modbus function codes
 #define MODBUS_READ_COIL                 0x01
 #define MODBUS_READ_STATUS_INPUTS        0x02
 #define MODBUS_READ_HOLDING              0x03

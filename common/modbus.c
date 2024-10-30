@@ -20,9 +20,8 @@
 
 #include "modbus.h"
 
-uint8_t nDeviceID_gl = MDB_DEFAULT_ADDRESS;
+uint8_t nDeviceID_gl = MDB_DEFAULT_DEVICE_ID;
 uint16_t anModbus_HoldingRegister[MDB_NUM_HOLDINGREG];
-uint8_t bModbus_Coils[MDB_NUM_COILS/8];
 extern uint8_t anUARTRxBuf[];
 extern uint8_t anUARTTxBuf[];
 
@@ -111,7 +110,11 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       nLen = ((uint16_t)pRxPacket[4])<<8;
       nLen += (uint16_t)pRxPacket[5];
 
-      if((nAddr+nLen) > MDB_NUM_COILS){
+      // Check input coil range
+      if(nAddr < MDB_ADDR_FIRST_INPUT_COIL && nAddr < MDB_ADDR_FIRST_OUTPUT_COIL){
+        return MODBUS_ERR_ILLEGAL_DATA_VALUE;
+      }
+      if(nLen > (MDB_NUM_INPUT_COIL+MDB_NUM_OUTPUT_COIL)){
         return MODBUS_ERR_ILLEGAL_DATA_VALUE;
       }
       nCRC16_Rx  = ((uint16_t)pRxPacket[7])<<8;
@@ -129,7 +132,7 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
         pTxPacket[2] = nDataBytes;
         pTxPacket[3] = 0;
         for(ni=0; ni<nLen; ni++){
-          pTxPacket[3] |= GetCoil(nAddr+ni) << ni;
+          pTxPacket[3] |= GetCoil(nAddr+ni) << ni; // TODO: read whole port at once
         }
       }
       nCRC16 = CRC16(pTxPacket, 3+nDataBytes);
@@ -141,6 +144,12 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
     case MODBUS_WRITE_SINGLE_COIL:
       nAddr = ((uint16_t)pRxPacket[2])<<8;
       nAddr += (uint16_t)pRxPacket[3];
+
+      if(nAddr < MDB_ADDR_FIRST_OUTPUT_COIL){
+        return MODBUS_ERR_ILLEGAL_DATA_VALUE;
+      }
+      // Remove address offset
+      nAddr -= MDB_ADDR_FIRST_OUTPUT_COIL;
 
       // Check CRC
       nCRC16_Rx  = ((uint16_t)pRxPacket[7])<<8;
@@ -165,6 +174,12 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
     case MODBUS_WRITE_MULTIPLE_COILS:
       nAddr = ((uint16_t)pRxPacket[2])<<8;
       nAddr += (uint16_t)pRxPacket[3];
+
+      if(nAddr < MDB_ADDR_FIRST_OUTPUT_COIL){
+        return MODBUS_ERR_ILLEGAL_DATA_VALUE;
+      }
+      // Remove address offset
+      nAddr -= MDB_ADDR_FIRST_OUTPUT_COIL;
       // nLen = Quantity of Outputs
       nLen = ((uint16_t)pRxPacket[4])<<8;
       nLen += (uint16_t)pRxPacket[5];
@@ -180,17 +195,30 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       if(nCRC16 != nCRC16_Rx)
         return MODBUS_ERR_NEGATIVE_ACKNOWLEDGE;
   
-      // Set outputs
-      uint8_t nBitPos=0, nDataByte=0;
-      for(uint16_t nCurrAddr = nAddr; nCurrAddr < (nAddr + nLen); nCurrAddr++){
-        if (SetCoil(nCurrAddr, pRxPacket[7+nDataByte] & (1<<nBitPos))){
-          return MODBUS_ERR_ILLEGAL_DATA_VALUE;
+      // Set outputs at once - only possible if all bits are on one port
+      if(nBytes <= 2){
+        uint16_t nBitmask = nLen * 2 - 1;
+  //      for(int i = 0; i<nLen; i++){ nBitmask |= 1<<i;  }
+        nBitmask = nBitmask << nAddr;
+
+        if (nLen < 8){
+          SetMultipleCoils(nBitmask, pRxPacket[7]);
+        } else{
+          SetMultipleCoils(nBitmask, (((uint16_t)pRxPacket[8])<<8) + pRxPacket[7]);
         }
-        if(nBitPos == 7){
-          nBitPos = 0;
-          nDataByte++;
+      } else{
+        // Set outputs separately
+        uint8_t nBitPos=0, nDataByte=0;
+        for(uint16_t nCurrAddr = nAddr; nCurrAddr < (nAddr + nLen); nCurrAddr++){
+          if (SetCoil(nCurrAddr, pRxPacket[7+nDataByte] & (1<<nBitPos))){
+            return MODBUS_ERR_ILLEGAL_DATA_VALUE;
+          }
+          if(nBitPos == 7){
+            nBitPos = 0;
+            nDataByte++;
+          }
+          nBitPos++;
         }
-        nBitPos++;
       }
       
       // Response
