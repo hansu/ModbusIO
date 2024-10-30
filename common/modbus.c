@@ -70,6 +70,7 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
   switch(pRxPacket[1])
   {
     case MODBUS_READ_HOLDING:
+    case MODBUS_READ_INPUT_REGISTERS:
       nAddr = ((uint16_t)pRxPacket[2])<<8;
       nAddr += (uint16_t)pRxPacket[3];
       // Number of registers to read
@@ -87,7 +88,7 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
 
       // Response
       pTxPacket[0] = nDeviceID_gl;
-      pTxPacket[1] = MODBUS_READ_HOLDING;
+      pTxPacket[1] = pRxPacket[1];
       // Length in Bytes
       pTxPacket[2] = (uint8_t)(nLen<<1);
       nDataBytes=0;
@@ -102,6 +103,7 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       Send(pTxPacket, 5+nDataBytes);
       return MODBUS_ERR_NO_EXCEPTION;
 
+    case MODBUS_READ_STATUS_INPUTS:
     case MODBUS_READ_COIL:
       nAddr = ((uint16_t)pRxPacket[2])<<8;
       nAddr += (uint16_t)pRxPacket[3];
@@ -120,7 +122,7 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
 
       // Response
       pTxPacket[0] = nDeviceID_gl;
-      pTxPacket[1] = MODBUS_READ_COIL;
+      pTxPacket[1] = pRxPacket[1];
       // Length in Bytes
       if(nLen<=8){
         nDataBytes=1;                // One byte data for 8 coils
@@ -159,39 +161,6 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       Send(pRxPacket, 8);
       return MODBUS_ERR_NO_EXCEPTION;
 
-    case MODBUS_READ_STATUS_INPUTS:
-      nAddr = ((uint16_t)pRxPacket[2])<<8;
-      nAddr += (uint16_t)pRxPacket[3];
-      // Number of bits to read
-      nLen = ((uint16_t)pRxPacket[4])<<8;
-      nLen += (uint16_t)pRxPacket[5];
-
-      if((nAddr+nLen) > MDB_NUM_COILS){
-        return MODBUS_ERR_ILLEGAL_DATA_VALUE;
-      }
-      nCRC16_Rx  = ((uint16_t)pRxPacket[7])<<8;
-      nCRC16_Rx += (uint16_t)pRxPacket[6];
-      nCRC16 = CRC16(pRxPacket, 6);
-      if(nCRC16 != nCRC16_Rx)
-        return MODBUS_ERR_NEGATIVE_ACKNOWLEDGE;
-
-      // Response
-      pTxPacket[0] = nDeviceID_gl;
-      pTxPacket[1] = MODBUS_READ_STATUS_INPUTS;
-      // Length in Bytes
-      if(nLen<=8){
-        nDataBytes=1;                // One byte data for 8 coils
-        pTxPacket[2] = nDataBytes;
-        pTxPacket[3] = 0;
-        for(ni=0; ni<nLen; ni++){
-          pTxPacket[3] |= GetCoil(nAddr+ni) << ni;
-        }
-      }
-      nCRC16 = CRC16(pTxPacket, 3+nDataBytes);
-      pTxPacket[3+nDataBytes] = (uint8_t)(nCRC16&0xFF);
-      pTxPacket[4+nDataBytes] = (uint8_t)(nCRC16>>8);
-      Send(pTxPacket, 5+nDataBytes);
-      return MODBUS_ERR_NO_EXCEPTION;
 
     case MODBUS_WRITE_MULTIPLE_COILS:
       nAddr = ((uint16_t)pRxPacket[2])<<8;
