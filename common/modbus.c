@@ -201,9 +201,10 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
         return MODBUS_ERR_NEGATIVE_ACKNOWLEDGE;
   
       // Set outputs at once - only possible if all bits are on one port
-      if(nBytes <= 2){
+      if(0) {
+//    if(nBytes <= 2){
         uint16_t nBitmask = nLen * 2 - 1;
-  //      for(int i = 0; i<nLen; i++){ nBitmask |= 1<<i;  }
+        // for(int i = 0; i<nLen; i++){ nBitmask |= 1<<i;  }
         nBitmask = nBitmask << nAddr;
 
         if (nLen < 8){
