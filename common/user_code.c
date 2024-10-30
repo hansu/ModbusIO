@@ -69,6 +69,7 @@ void UART1_RX_IRQ(UART_HandleTypeDef *huart)
     if (USART1->ISR & USART_ISR_ORE) {
         USART1->ICR |= USART_ICR_ORECF; // Reset overrun error
         HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+        nUARTIter = 0;
     }
     if (USART1->ISR & USART_ISR_EOBF) {
         USART1->ICR |= USART_ICR_EOBCF; // clear end of block flag
