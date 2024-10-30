@@ -193,6 +193,50 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       Send(pTxPacket, 5+nDataBytes);
       return MODBUS_ERR_NO_EXCEPTION;
 
+    case MODBUS_WRITE_MULTIPLE_COILS:
+      nAddr = ((uint16_t)pRxPacket[2])<<8;
+      nAddr += (uint16_t)pRxPacket[3];
+      // nLen = Quantity of Outputs
+      nLen = ((uint16_t)pRxPacket[4])<<8;
+      nLen += (uint16_t)pRxPacket[5];
+      // Byte count (Quantity of Outputs / 8)
+      uint8_t nBytes = pRxPacket[6];
+      // Output values, N bytes
+      (void)pRxPacket[7];
+
+      // Check CRC
+      nCRC16_Rx  = ((uint16_t)pRxPacket[8+nBytes])<<8;
+      nCRC16_Rx += (uint16_t)pRxPacket[7+nBytes];
+      nCRC16 = CRC16(pRxPacket, 7+nBytes);
+      if(nCRC16 != nCRC16_Rx)
+        return MODBUS_ERR_NEGATIVE_ACKNOWLEDGE;
+  
+      // Set outputs
+      uint8_t nBitPos=0, nDataByte=0;
+      for(uint16_t nCurrAddr = nAddr; nCurrAddr < (nAddr + nLen); nCurrAddr++){
+        if (SetCoil(nCurrAddr, pRxPacket[7+nDataByte] & (1<<nBitPos))){
+          return MODBUS_ERR_ILLEGAL_DATA_VALUE;
+        }
+        if(nBitPos == 7){
+          nBitPos = 0;
+          nDataByte++;
+        }
+        nBitPos++;
+      }
+      
+      // Response
+      pTxPacket[0] = pRxPacket[0]; // Device ID
+      pTxPacket[1] = pRxPacket[1]; // Function code
+      pTxPacket[2] = pRxPacket[2]; // Starting address byte 1
+      pTxPacket[3] = pRxPacket[3]; // Starting address byte 2
+      pTxPacket[4] = pRxPacket[4]; // Quantity of outputs byte 1
+      pTxPacket[5] = pRxPacket[5]; // Quantity of outputs byte 2
+      nCRC16 = CRC16(pTxPacket, 6);
+      pTxPacket[6] = (uint8_t)(nCRC16&0xFF);
+      pTxPacket[7] = (uint8_t)(nCRC16>>8);
+      Send(pTxPacket, 8);
+      return MODBUS_ERR_NO_EXCEPTION;
+
     default:
       return MODBUS_ERR_ILLEGAL_FUNCTION;
   }
