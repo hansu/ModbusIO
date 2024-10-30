@@ -13,8 +13,8 @@ uint16_t nUARTIter;
 uint8_t anUARTRxBuf[UART_BUFFERSIZE];
 uint8_t anUARTTxBuf[UART_BUFFERSIZE];
 extern uint16_t anModbus_HoldingRegister[MDB_NUM_HOLDINGREG];
-extern uint8_t bModbus_Coils[MDB_NUM_COILS/8];
 uint16_t ADC1Values[4];
+#define FIRST_OUTPUT_GPIOC 4 // first 4 pins are used as analoh input
 
 /*
  * Interface function for modbus
@@ -29,24 +29,37 @@ void UartTransmit(uint8_t *data, uint8_t len)
  */
 uint8_t GetCoil(uint16_t nCoilAddress)
 {
-    if (nCoilAddress < 16) {
+    if (nCoilAddress >= MDB_ADDR_FIRST_INPUT_COIL &&
+        nCoilAddress < (MDB_ADDR_FIRST_INPUT_COIL+MDB_NUM_INPUT_COIL) ) {
         return HAL_GPIO_ReadPin(GPIOB, 1 << nCoilAddress);
-    } else {
-        return 0;
+    } else if (nCoilAddress >= MDB_ADDR_FIRST_OUTPUT_COIL &&
+        nCoilAddress < (MDB_ADDR_FIRST_OUTPUT_COIL+MDB_NUM_OUTPUT_COIL) ) {
+        return HAL_GPIO_ReadPin(GPIOC, 1 << (nCoilAddress+FIRST_OUTPUT_GPIOC));
     }
 }
 
 /*
  * Interface function for modbus
  */
-uint8_t SetCoil(uint16_t nCoilAddress, uint8_t value)
+int8_t SetCoil(uint16_t nCoilAddress, uint8_t value)
 {
     if (nCoilAddress < 10) { // TODO insert variable limit
-        HAL_GPIO_WritePin(GPIOC, 1 << (nCoilAddress+4), value);
+        HAL_GPIO_WritePin(GPIOC, 1 << (nCoilAddress+FIRST_OUTPUT_GPIOC), value);
         return 0;
     } else {
         return -1;
     }
+
+}
+
+/*
+ * Interface function for modbus
+ */
+void SetMultipleCoils(uint16_t bitMask, uint16_t data)
+{
+    uint32_t temp = GPIOC->IDR;
+    temp &= ~(bitMask<<FIRST_OUTPUT_GPIOC);
+    GPIOC->ODR = temp | (data<<FIRST_OUTPUT_GPIOC);
 
 }
 
