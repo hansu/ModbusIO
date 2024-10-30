@@ -125,16 +125,21 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
 
       // Response
       pTxPacket[0] = nDeviceID_gl;
-      pTxPacket[1] = pRxPacket[1];
-      // Length in Bytes
-      if(nLen<=8){
-        nDataBytes=1;                // One byte data for 8 coils
-        pTxPacket[2] = nDataBytes;
-        pTxPacket[3] = 0;
-        for(ni=0; ni<nLen; ni++){
-          pTxPacket[3] |= GetCoil(nAddr+ni) << ni; // TODO: read whole port at once
+      pTxPacket[1] = pRxPacket[1];  // Function code
+
+      uint8_t nBitPos=0;
+      nDataBytes=1;
+      pTxPacket[3] = 0;
+      for(uint16_t nCurrAddr = nAddr; nCurrAddr < (nAddr + nLen); nCurrAddr++){
+        if(nBitPos > 7){
+          nBitPos = 0;
+          nDataBytes++;
+          pTxPacket[2+nDataBytes] = 0;
         }
+        pTxPacket[2+nDataBytes] |= GetCoil(nCurrAddr) << nBitPos; // TODO: read whole GPIO Port at once
+        nBitPos++;
       }
+      pTxPacket[2] = nDataBytes;
       nCRC16 = CRC16(pTxPacket, 3+nDataBytes);
       pTxPacket[3+nDataBytes] = (uint8_t)(nCRC16&0xFF);
       pTxPacket[4+nDataBytes] = (uint8_t)(nCRC16>>8);

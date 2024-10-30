@@ -31,10 +31,12 @@ uint8_t GetCoil(uint16_t nCoilAddress)
 {
     if (nCoilAddress >= MDB_ADDR_FIRST_INPUT_COIL &&
         nCoilAddress < (MDB_ADDR_FIRST_INPUT_COIL+MDB_NUM_INPUT_COIL) ) {
-        return HAL_GPIO_ReadPin(GPIOB, 1 << nCoilAddress);
+        return HAL_GPIO_ReadPin(GPIOB, 1 << (nCoilAddress-MDB_ADDR_FIRST_INPUT_COIL));
     } else if (nCoilAddress >= MDB_ADDR_FIRST_OUTPUT_COIL &&
         nCoilAddress < (MDB_ADDR_FIRST_OUTPUT_COIL+MDB_NUM_OUTPUT_COIL) ) {
-        return HAL_GPIO_ReadPin(GPIOC, 1 << (nCoilAddress+FIRST_OUTPUT_GPIOC));
+        return HAL_GPIO_ReadPin(GPIOC, 1 << (nCoilAddress-MDB_ADDR_FIRST_OUTPUT_COIL+FIRST_OUTPUT_GPIOC));
+    } else {
+    	return 0;
     }
 }
 
