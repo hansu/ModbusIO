@@ -62,7 +62,8 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
 {
   uint16_t nAddr; // Register address
   uint16_t nLen, nCRC16, nCRC16_Rx;
-  uint16_t ni, nDataBytes, nData;
+  uint16_t ni, nData;
+  uint8_t nByteCount;
   if(pRxPacket[0] != nDeviceID_gl)
     return MODBUS_ERR_NO_EXCEPTION;
 
@@ -90,16 +91,16 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       pTxPacket[1] = pRxPacket[1];
       // Length in Bytes
       pTxPacket[2] = (uint8_t)(nLen<<1);
-      nDataBytes=0;
+      nByteCount=0;
       for(ni=nAddr; ni<(nAddr+nLen); ni++){
-        pTxPacket[3+nDataBytes] = (uint8_t)(anModbus_HoldingRegister[ni]>>8);
-        pTxPacket[4+nDataBytes] = (uint8_t)(anModbus_HoldingRegister[ni]&0xFF);
-        nDataBytes+=2;
+        pTxPacket[3+nByteCount] = (uint8_t)(anModbus_HoldingRegister[ni]>>8);
+        pTxPacket[4+nByteCount] = (uint8_t)(anModbus_HoldingRegister[ni]&0xFF);
+        nByteCount+=2;
       }
-      nCRC16 = CRC16(pTxPacket, 3+nDataBytes);
-      pTxPacket[3+nDataBytes] = (uint8_t)(nCRC16&0xFF);
-      pTxPacket[4+nDataBytes] = (uint8_t)(nCRC16>>8);
-      Send(pTxPacket, 5+nDataBytes);
+      nCRC16 = CRC16(pTxPacket, 3+nByteCount);
+      pTxPacket[3+nByteCount] = (uint8_t)(nCRC16&0xFF);
+      pTxPacket[4+nByteCount] = (uint8_t)(nCRC16>>8);
+      Send(pTxPacket, 5+nByteCount);
       return MODBUS_ERR_NO_EXCEPTION;
 
     case MODBUS_READ_STATUS_INPUTS:
@@ -128,22 +129,22 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       pTxPacket[1] = pRxPacket[1];  // Function code
 
       uint8_t nBitPos=0;
-      nDataBytes=1;
+      nByteCount=1;
       pTxPacket[3] = 0;
       for(uint16_t nCurrAddr = nAddr; nCurrAddr < (nAddr + nLen); nCurrAddr++){
         if(nBitPos > 7){
           nBitPos = 0;
-          nDataBytes++;
-          pTxPacket[2+nDataBytes] = 0;
+          nByteCount++;
+          pTxPacket[2+nByteCount] = 0;
         }
-        pTxPacket[2+nDataBytes] |= GetCoil(nCurrAddr) << nBitPos; // TODO: read whole GPIO Port at once
+        pTxPacket[2+nByteCount] |= GetCoil(nCurrAddr) << nBitPos; // TODO: read whole GPIO Port at once
         nBitPos++;
       }
-      pTxPacket[2] = nDataBytes;
-      nCRC16 = CRC16(pTxPacket, 3+nDataBytes);
-      pTxPacket[3+nDataBytes] = (uint8_t)(nCRC16&0xFF);
-      pTxPacket[4+nDataBytes] = (uint8_t)(nCRC16>>8);
-      Send(pTxPacket, 5+nDataBytes);
+      pTxPacket[2] = nByteCount;
+      nCRC16 = CRC16(pTxPacket, 3+nByteCount);
+      pTxPacket[3+nByteCount] = (uint8_t)(nCRC16&0xFF);
+      pTxPacket[4+nByteCount] = (uint8_t)(nCRC16>>8);
+      Send(pTxPacket, 5+nByteCount);
       return MODBUS_ERR_NO_EXCEPTION;
   
     case MODBUS_WRITE_SINGLE_COIL:
@@ -214,14 +215,15 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
         }
       } else{
         // Set outputs separately
-        uint8_t nBitPos=0, nDataByte=0;
+        uint8_t nBitPos=0;
+        nByteCount=0;
         for(uint16_t nCurrAddr = nAddr; nCurrAddr < (nAddr + nLen); nCurrAddr++){
-          if (SetCoil(nCurrAddr, pRxPacket[7+nDataByte] & (1<<nBitPos))){
+          if (SetCoil(nCurrAddr, pRxPacket[7+nByteCount] & (1<<nBitPos))){
             return MODBUS_ERR_ILLEGAL_DATA_VALUE;
           }
           if(nBitPos == 7){
             nBitPos = 0;
-            nDataByte++;
+            nByteCount++;
           }
           nBitPos++;
         }
