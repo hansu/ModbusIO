@@ -224,8 +224,9 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
           if(nBitPos == 7){
             nBitPos = 0;
             nByteCount++;
+          } else {
+            nBitPos++;
           }
-          nBitPos++;
         }
       }
       
