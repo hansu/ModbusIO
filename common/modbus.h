@@ -39,9 +39,11 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
 #define MDB_NUM_HOLDINGREG               6
 #define MDB_NUM_OUTPUT_COIL              10
 #define MDB_NUM_INPUT_COIL               16
-#define MDB_ADDR_FIRST_HOLDINGREG        0
-#define MDB_ADDR_FIRST_OUTPUT_COIL       0
-#define MDB_ADDR_FIRST_INPUT_COIL        10
+// The addresses below define the beginng address of that type
+#define MDB_ADDR_HOLDINGREG              0
+#define MDB_ADDR_OUTPUT_COIL             0
+#define MDB_ADDR_INPUT_COIL              10
+#define MDB_ADDR_INPUT_COIL_INVERTED     (10 + MDB_NUM_INPUT_COIL)
 
 // Modbus function codes
 #define MODBUS_READ_COIL                 0x01

@@ -111,13 +111,13 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       nLen = ((uint16_t)pRxPacket[4])<<8;
       nLen += (uint16_t)pRxPacket[5];
 
-      // Check input coil range
-      if(nAddr < MDB_ADDR_FIRST_INPUT_COIL && nAddr < MDB_ADDR_FIRST_OUTPUT_COIL){
-        return MODBUS_ERR_ILLEGAL_DATA_VALUE;
-      }
-      if(nLen > (MDB_NUM_INPUT_COIL+MDB_NUM_OUTPUT_COIL)){
-        return MODBUS_ERR_ILLEGAL_DATA_VALUE;
-      }
+      // // Check input coil range
+      // if(nAddr < MDB_ADDR_INPUT_COIL && nAddr < MDB_ADDR_OUTPUT_COIL){
+      //   return MODBUS_ERR_ILLEGAL_DATA_VALUE;
+      // }
+      // if(nLen > (MDB_NUM_INPUT_COIL+MDB_NUM_OUTPUT_COIL)){
+      //   return MODBUS_ERR_ILLEGAL_DATA_VALUE;
+      // }
       nCRC16_Rx  = ((uint16_t)pRxPacket[7])<<8;
       nCRC16_Rx += (uint16_t)pRxPacket[6];
       nCRC16 = CRC16(pRxPacket, 6);
@@ -151,11 +151,11 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       nAddr = ((uint16_t)pRxPacket[2])<<8;
       nAddr += (uint16_t)pRxPacket[3];
 
-      if(nAddr < MDB_ADDR_FIRST_OUTPUT_COIL){
+      if(nAddr < MDB_ADDR_OUTPUT_COIL){
         return MODBUS_ERR_ILLEGAL_DATA_VALUE;
       }
       // Remove address offset
-      nAddr -= MDB_ADDR_FIRST_OUTPUT_COIL;
+      nAddr -= MDB_ADDR_OUTPUT_COIL;
 
       // Check CRC
       nCRC16_Rx  = ((uint16_t)pRxPacket[7])<<8;
@@ -181,11 +181,11 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       nAddr = ((uint16_t)pRxPacket[2])<<8;
       nAddr += (uint16_t)pRxPacket[3];
 
-      if(nAddr < MDB_ADDR_FIRST_OUTPUT_COIL){
+      if(nAddr < MDB_ADDR_OUTPUT_COIL){
         return MODBUS_ERR_ILLEGAL_DATA_VALUE;
       }
       // Remove address offset
-      nAddr -= MDB_ADDR_FIRST_OUTPUT_COIL;
+      nAddr -= MDB_ADDR_OUTPUT_COIL;
       // nLen = Quantity of Outputs
       nLen = ((uint16_t)pRxPacket[4])<<8;
       nLen += (uint16_t)pRxPacket[5];

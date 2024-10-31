@@ -29,12 +29,16 @@ void UartTransmit(uint8_t *data, uint8_t len)
  */
 uint8_t GetCoil(uint16_t nCoilAddress)
 {
-    if (nCoilAddress >= MDB_ADDR_FIRST_INPUT_COIL &&
-        nCoilAddress < (MDB_ADDR_FIRST_INPUT_COIL+MDB_NUM_INPUT_COIL) ) {
-        return HAL_GPIO_ReadPin(GPIOB, 1 << (nCoilAddress-MDB_ADDR_FIRST_INPUT_COIL));
-    } else if (nCoilAddress >= MDB_ADDR_FIRST_OUTPUT_COIL &&
-        nCoilAddress < (MDB_ADDR_FIRST_OUTPUT_COIL+MDB_NUM_OUTPUT_COIL) ) {
-        return HAL_GPIO_ReadPin(GPIOC, 1 << (nCoilAddress-MDB_ADDR_FIRST_OUTPUT_COIL+FIRST_OUTPUT_GPIOC));
+    if (nCoilAddress >= MDB_ADDR_OUTPUT_COIL &&
+        nCoilAddress < (MDB_ADDR_OUTPUT_COIL+MDB_NUM_OUTPUT_COIL) ) {
+        return HAL_GPIO_ReadPin(GPIOC, 1 << (nCoilAddress-MDB_ADDR_OUTPUT_COIL+FIRST_OUTPUT_GPIOC));
+
+    } else if (nCoilAddress >= MDB_ADDR_INPUT_COIL &&
+        nCoilAddress < (MDB_ADDR_INPUT_COIL+MDB_NUM_INPUT_COIL) ) {
+        return HAL_GPIO_ReadPin(GPIOB, 1 << (nCoilAddress-MDB_ADDR_INPUT_COIL));
+    } else if (nCoilAddress >= MDB_ADDR_INPUT_COIL_INVERTED &&
+        nCoilAddress < (MDB_ADDR_INPUT_COIL_INVERTED+MDB_NUM_INPUT_COIL) ) {
+        return !HAL_GPIO_ReadPin(GPIOB, 1 << (nCoilAddress-MDB_ADDR_INPUT_COIL_INVERTED));
     } else {
     	return 0;
     }
