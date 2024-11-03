@@ -359,7 +359,7 @@ __weak void HAL_Delay(uint32_t Delay)
   uint32_t wait = Delay;
   
   /* Add freq to guarantee minimum wait */
-  if (wait < HAL_MAX_DELAY)
+  if (wait < HAL_TICK_FREQ_DEFAULT)
   {
     wait += (uint32_t)(uwTickFreq);
   }
