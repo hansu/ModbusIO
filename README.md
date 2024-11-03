@@ -42,6 +42,7 @@ Baud rate:. 115200, 8N1
     `watch -n 0.1 modbus /dev/ttyUSB0 -b 115200 -s 1 h@2 3 4 5 c@0 c@1 c@2`
 3. Write values:
     `modbus /dev/ttyUSB0 -b 115200 -s 1 c@0=1`
+    `modbus /dev/ttyUSB0 -b 115200 -s 1 h@10=200
 
 ### Using modpoll
 Run one of the examples scripts in `modpoll/` :

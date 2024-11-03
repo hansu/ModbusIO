@@ -173,6 +173,29 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       Send(pRxPacket, 8);
       return MODBUS_ERR_NO_EXCEPTION;
 
+    case MODBUS_WRITE_SINGLE_REGISTER:
+      nAddr = ((uint16_t)pRxPacket[2])<<8;
+      nAddr += (uint16_t)pRxPacket[3];
+
+      // Check CRC
+      nCRC16_Rx  = ((uint16_t)pRxPacket[7])<<8;
+      nCRC16_Rx += (uint16_t)pRxPacket[6];
+      nCRC16 = CRC16(pRxPacket, 6);
+      if(nCRC16 != nCRC16_Rx)
+        return MODBUS_ERR_NEGATIVE_ACKNOWLEDGE;
+
+      // Write data
+      nData = ((uint16_t)pRxPacket[4])<<8;
+      nData += (uint16_t)pRxPacket[5];
+
+      if(SetHolding(nAddr, nData)) {
+        return MODBUS_ERR_ILLEGAL_DATA_VALUE;
+      }
+
+      // Response : echo of the request
+      Send(pRxPacket, 8);
+      return MODBUS_ERR_NO_EXCEPTION;
+
 
     case MODBUS_WRITE_MULTIPLE_COILS:
       nAddr = ((uint16_t)pRxPacket[2])<<8;

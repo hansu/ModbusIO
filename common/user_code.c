@@ -104,7 +104,14 @@ void GetHolding(uint8_t *highByte, uint8_t *lowByte, uint16_t address){
     }
 }
         
-
+int8_t SetHolding(uint16_t nAddress, uint16_t data){
+    if (nAddress==10) {
+        NUM_AVG_VALUES = data;
+        return 0;
+    } else {
+        return -1;
+    }
+}
 
 uint8_t ReadUSART()
 {
