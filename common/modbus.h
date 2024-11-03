@@ -25,11 +25,11 @@
 #define UART_BUFFERSIZE 200
 extern  uint8_t nDeviceID_gl;
 extern uint8_t anTxBuf[];
-extern uint16_t anModbus_HoldingRegister[];
 void Send(uint8_t *pData, uint8_t nLen);
 uint8_t GetCoil(uint16_t nCoilAddress);
 int8_t SetCoil(uint16_t nCoilAddress, uint8_t value);
 void SetMultipleCoils(uint16_t bitMask, uint16_t data);
+void GetHolding(uint8_t *highByte, uint8_t *lowByte, uint16_t address);
 
 uint16_t CRC16(uint8_t *buffer, uint8_t count);
 uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_t *, uint8_t));

@@ -70,6 +70,6 @@ stm32f3xx_it.C
 ### To do's
 
 Test Encoder
-Filtering of analog values
 Debounce/stretch inputs
+Add write holding for configuration of number of averages
 

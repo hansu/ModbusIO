@@ -1,20 +1,23 @@
 #include "main.h"
 #include "stdio.h"
 #include <string.h>
-#include "../../../common/modbus.h"
+#include "modbus.h"
+#include "user.h"
 
 extern TIM_HandleTypeDef htim2;
 extern UART_HandleTypeDef huart1;
 extern ADC_HandleTypeDef hadc1;
-extern uint16_t anModbus_HoldingRegister[];
 
 #define UART_BUFFERSIZE 200
 uint16_t nUARTIter;
 uint8_t anUARTRxBuf[UART_BUFFERSIZE];
 uint8_t anUARTTxBuf[UART_BUFFERSIZE];
-extern uint16_t anModbus_HoldingRegister[MDB_NUM_HOLDINGREG];
-uint16_t ADC1Values[4];
+uint16_t anModbus_HoldingRegister[MDB_NUM_HOLDINGREG];
+uint16_t anADC1Values[4];
 #define FIRST_OUTPUT_GPIOC 4 // first 4 pins are used as analoh input
+uint16_t anADC1AVG[4];
+uint16_t anADC1AVG_temp[4][MAX_NUM_AVG_VALUES];
+uint16_t NUM_AVG_VALUES = 100;
 
 /*
  * Interface function for modbus
@@ -69,6 +72,40 @@ void SetMultipleCoils(uint16_t bitMask, uint16_t data)
 
 }
 
+void GetHolding(uint8_t *highByte, uint8_t *lowByte, uint16_t address){
+
+    uint32_t temp;
+    static uint32_t tim2CNT_snapshot;
+    switch(address){
+    	case 0:
+            tim2CNT_snapshot = TIM2->CNT;
+            *highByte = (uint8_t)(tim2CNT_snapshot>>24);
+            *lowByte = (uint8_t)(tim2CNT_snapshot>>16);
+
+    	case 1:
+            *highByte = (uint8_t)(tim2CNT_snapshot>>8);
+            *lowByte = (uint8_t)tim2CNT_snapshot;
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+            temp = 0;
+            for(int i=0; i<NUM_AVG_VALUES; i++){
+                temp += anADC1AVG_temp[address-2][i];
+            }
+            anADC1AVG[address-2] = temp/NUM_AVG_VALUES;
+            *highByte = (uint8_t)(anADC1AVG[address-2]>>8);
+            *lowByte = (uint8_t)(anADC1AVG[address-2]&0xFF);
+            break;
+        default:
+            *highByte = 0;
+            *lowByte = 0;
+            break;
+    }
+}
+        
+
+
 uint8_t ReadUSART()
 {
     return USART1->RDR;
@@ -115,7 +152,7 @@ void StartPeripherals(void)
     HAL_TIM_Encoder_Start(&htim2, 1); // TIM1->CR1 |= TIM_CR1_CEN;
     //  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
     // anModbus_HoldingRegister[0..1] are reserved for encoder
-    HAL_ADC_Start_DMA(&hadc1, (uint16_t *)&anModbus_HoldingRegister[2], 4);
+    HAL_ADC_Start_DMA(&hadc1, (uint32_t *)anADC1Values, 4);
 }
 
 void MainLoop(void)
@@ -124,10 +161,9 @@ void MainLoop(void)
     {
 //  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 #if defined(STM32L476xx) || defined(STM32L432xx) || defined(STM32F303xE)
-        anModbus_HoldingRegister[0] = (uint8_t)TIM2->CNT;
-        anModbus_HoldingRegister[1] = (uint8_t)(((TIM2->CNT) >> 8) & 0xFF);
+
 #endif
-        HAL_Delay(10);
+        HAL_Delay(1);
     }
 }
 
@@ -138,7 +174,7 @@ void MainLoop(void)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if(GPIO_Pin & (uint16_t)(1 << 0)){
-		anModbus_HoldingRegister[6] = HAL_GPIO_ReadPin(GPIOB, GPIO_Pin);
+//		 = HAL_GPIO_ReadPin(GPIOB, GPIO_Pin);
 	}
     // TODO: debouncing for buttons
 

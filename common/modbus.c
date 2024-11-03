@@ -21,10 +21,8 @@
 #include "modbus.h"
 
 uint8_t nDeviceID_gl = MDB_DEFAULT_DEVICE_ID;
-uint16_t anModbus_HoldingRegister[MDB_NUM_HOLDINGREG];
 extern uint8_t anUARTRxBuf[];
 extern uint8_t anUARTTxBuf[];
-
 
 /*
  * Calculate CRC16 of a data buffer.
@@ -93,8 +91,7 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       pTxPacket[2] = (uint8_t)(nLen<<1);
       nByteCount=0;
       for(ni=nAddr; ni<(nAddr+nLen); ni++){
-        pTxPacket[3+nByteCount] = (uint8_t)(anModbus_HoldingRegister[ni]>>8);
-        pTxPacket[4+nByteCount] = (uint8_t)(anModbus_HoldingRegister[ni]&0xFF);
+        GetHolding(&pTxPacket[3+nByteCount], &pTxPacket[4+nByteCount], ni);
         nByteCount+=2;
       }
       nCRC16 = CRC16(pTxPacket, 3+nByteCount);

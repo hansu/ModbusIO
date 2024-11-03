@@ -22,7 +22,7 @@
 #include "stm32f3xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-void UART1_RX_IRQ(UART_HandleTypeDef *huart);
+#include "../../../common/user.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,7 +52,11 @@ void UART1_RX_IRQ(UART_HandleTypeDef *huart);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void UART1_RX_IRQ(UART_HandleTypeDef *huart);
+extern uint16_t anADC1Values[4];
+extern uint16_t anADC1AVG_temp[4][MAX_NUM_AVG_VALUES];
+static uint16_t anADC1AVG_counter = 0;
+extern uint16_t NUM_AVG_VALUES;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -281,6 +285,24 @@ void DMA1_Channel1_IRQHandler(void)
   HAL_DMA_IRQHandler(&hdma_adc1);
   /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
 
+
+  // ADC value processing
+  if(anADC1AVG_counter < NUM_AVG_VALUES) {
+    for(int ch=0; ch<4; ch++) {
+      anADC1AVG_temp[ch][anADC1AVG_counter] = anADC1Values[ch];
+    }
+    anADC1AVG_counter++;
+  } else {
+    anADC1AVG_counter = 0;
+    // Calculate AVG --> do that only on demand
+    // for(int ch=0; ch<4; ch++) {
+    //   uint32_t temp = 0;
+    //   for(int i=0; i<NUM_AVG_VALUES; i++){
+    //     temp += anADC1AVG_temp[ch][i];
+    //   }
+    //   anADC1AVG[ch] = temp/NUM_AVG_VALUES;
+    // }
+  }
   /* USER CODE END DMA1_Channel1_IRQn 1 */
 }
 
