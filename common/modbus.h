@@ -44,7 +44,7 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
 #define MDB_ADDR_HOLDINGREG              0
 #define MDB_ADDR_OUTPUT_COIL             0
 #define MDB_ADDR_INPUT_COIL              10
-#define MDB_ADDR_INPUT_COIL_INVERTED     (10 + MDB_NUM_INPUT_COIL)
+#define MDB_ADDR_INPUT_COIL_BUTTONS     (10 + MDB_NUM_INPUT_COIL)
 
 // Modbus function codes
 #define MODBUS_READ_COIL                 0x01

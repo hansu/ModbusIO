@@ -18,6 +18,9 @@ uint16_t anADC1Values[4];
 uint16_t anADC1AVG[4];
 uint16_t anADC1AVG_temp[4][MAX_NUM_AVG_VALUES];
 uint16_t NUM_AVG_VALUES = 100;
+uint16_t anButtonState[16] = {0};
+uint8_t anButtonOut[16] = {0};
+uint16_t nButtonPulse_ms = 100;
 
 /*
  * Interface function for modbus
@@ -39,9 +42,9 @@ uint8_t GetCoil(uint16_t nCoilAddress)
     } else if (nCoilAddress >= MDB_ADDR_INPUT_COIL &&
         nCoilAddress < (MDB_ADDR_INPUT_COIL+MDB_NUM_INPUT_COIL) ) {
         return HAL_GPIO_ReadPin(GPIOB, 1 << (nCoilAddress-MDB_ADDR_INPUT_COIL));
-    } else if (nCoilAddress >= MDB_ADDR_INPUT_COIL_INVERTED &&
-        nCoilAddress < (MDB_ADDR_INPUT_COIL_INVERTED+MDB_NUM_INPUT_COIL) ) {
-        return !HAL_GPIO_ReadPin(GPIOB, 1 << (nCoilAddress-MDB_ADDR_INPUT_COIL_INVERTED));
+    } else if (nCoilAddress >= MDB_ADDR_INPUT_COIL_BUTTONS &&
+        nCoilAddress < (MDB_ADDR_INPUT_COIL_BUTTONS+MDB_NUM_INPUT_COIL) ) {
+        return anButtonOut[nCoilAddress-MDB_ADDR_INPUT_COIL_BUTTONS];
     } else {
     	return 0;
     }
@@ -105,11 +108,15 @@ void GetHolding(uint8_t *highByte, uint8_t *lowByte, uint16_t address){
 }
         
 int8_t SetHolding(uint16_t nAddress, uint16_t data){
-    if (nAddress==10) {
-        NUM_AVG_VALUES = data;
-        return 0;
-    } else {
-        return -1;
+    switch(nAddress) {
+        case 10:
+            NUM_AVG_VALUES = data;
+            return 0;
+        case 11:
+            nButtonPulse_ms = data;
+            return 0;
+        default:
+            return -1;
     }
 }
 
@@ -180,10 +187,8 @@ void MainLoop(void)
  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	if(GPIO_Pin & (uint16_t)(1 << 0)){
-//		 = HAL_GPIO_ReadPin(GPIOB, GPIO_Pin);
+	if(HAL_GPIO_ReadPin(GPIOB, GPIO_Pin) == 0) {
+		uint8_t bit = __builtin_ctz(GPIO_Pin);
+		anButtonState[bit] = nButtonPulse_ms + DEBOUNCE_TIME_MS;
 	}
-    // TODO: debouncing for buttons
-
-
 }

@@ -10,7 +10,7 @@ A ModBus Client running on a STM32 Nucleo Board featuring follwing IOs:
 
 The addresses can be defined in `common/modbus.h`.
 
-Device ID: 1  
+Device ID: 1
 Baud rate:. 115200, 8N1
 
 ### Read holding/read input register
@@ -23,13 +23,25 @@ Baud rate:. 115200, 8N1
 | 4     | Analog in 3  |
 | 5     | Analog in 4  |
 
+### Configuration holding register
+| Addr  | IO                         |
+| ------|----------------------------|
+| 10    | Number of averages for ADC |
+| 11    | Button pulse length        |
+
 ### Coils
-| Addr  |                                     |
-|-------|-------------------------------------|
-| 0 - 9 | Output coils                        |
-| 10 - 25 | Input coils (read only)           |
-| 26 - 41 | Input coils inverted (read only)  |
-<!-- | 42 - 57 | Input coils debounced (read only) | -->
+| Addr    |                                           |
+|---------|-------------------------------------------|
+| 0 - 9   | GPIO outputs                              |
+| 10 - 25 | GPIO inputs (read only)                   |
+| 26 - 41 | Button inputs with pull-ups (read only) * |
+
+*Extended button logic:
+- 1. A button is read as `1` when pressed.
+- 2. The buttons are software debounced.
+- 3. A button press events generates a pulse of 100 ms (can be changed with write holding 11) if the button is pressed shorter than that.
+
+This is useful to reduce the ModBus poll rate.
 
 
 ## Testing
@@ -71,6 +83,4 @@ stm32f3xx_it.C
 ### To do's
 
 Test Encoder
-Debounce/stretch inputs
-Add write holding for configuration of number of averages
 

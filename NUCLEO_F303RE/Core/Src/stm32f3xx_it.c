@@ -57,6 +57,9 @@ extern uint16_t anADC1Values[4];
 extern uint16_t anADC1AVG_temp[4][MAX_NUM_AVG_VALUES];
 static uint16_t anADC1AVG_counter = 0;
 extern uint16_t NUM_AVG_VALUES;
+extern uint16_t anButtonState[16];
+extern uint8_t anButtonOut[16];
+extern uint16_t nButtonPulse_ms;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -189,7 +192,21 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-
+  for (int i=0; i<16; i++){
+    if(anButtonState[i]){
+      // debouncing - check if after DEBOUNCE_TIME_MS still active
+      if(anButtonState[i] == nButtonPulse_ms && HAL_GPIO_ReadPin(GPIOB, 1<<i) == 0){
+        anButtonOut[i] = 1;
+      } else if(anButtonState[i] == 1){
+        if(HAL_GPIO_ReadPin(GPIOB, 1<<i) == 0){
+          anButtonState[i]++;
+        } else {
+          anButtonOut[i] = 0;
+        }
+      }
+      anButtonState[i]--;
+    }
+  }
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */

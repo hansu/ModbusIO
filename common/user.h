@@ -22,6 +22,8 @@
 
 // #define NUM_AVG_VALUES 100
 #define MAX_NUM_AVG_VALUES 1000
+// Debounce time for button inputs
+#define DEBOUNCE_TIME_MS   10
 
 
 #endif // USER_H_
