@@ -80,7 +80,3 @@ stm32f3xx_it.C
 ```
 (Unless if you make bigger changes, then you need to check them manually)
 
-### To do's
-
-Test Encoder
-
