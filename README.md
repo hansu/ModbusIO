@@ -16,12 +16,12 @@ Baud rate:. 115200, 8N1
 ### Read holding/read input register
 | Addr  | IO           |
 | ------|------------- |
-| 0     | Encoder high |
-| 1     | Encoder low  |
-| 2     | Analog in 1  |
-| 3     | Analog in 2  |
-| 4     | Analog in 3  |
-| 5     | Analog in 4  |
+| 0     | Analog in 1  |
+| 1     | Analog in 2  |
+| 2     | Analog in 3  |
+| 3     | Analog in 4  |
+| 4     | Encoder high |
+| 5     | Encoder low  |
 
 ### Configuration holding register
 | Addr  | IO                         |

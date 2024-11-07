@@ -80,25 +80,34 @@ void GetHolding(uint8_t *highByte, uint8_t *lowByte, uint16_t address){
     uint32_t temp;
     static uint32_t tim2CNT_snapshot;
     switch(address){
-    	case 0:
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            temp = 0;
+            for(int i=0; i<NUM_AVG_VALUES; i++){
+                temp += anADC1AVG_temp[address][i];
+            }
+            anADC1AVG[address] = temp/NUM_AVG_VALUES;
+            *highByte = (uint8_t)(anADC1AVG[address]>>8);
+            *lowByte = (uint8_t)(anADC1AVG[address]&0xFF);
+            break;
+    	case 4:
             tim2CNT_snapshot = TIM2->CNT;
             *highByte = (uint8_t)(tim2CNT_snapshot>>24);
             *lowByte = (uint8_t)(tim2CNT_snapshot>>16);
-
-    	case 1:
+            break;
+    	case 5:
             *highByte = (uint8_t)(tim2CNT_snapshot>>8);
             *lowByte = (uint8_t)tim2CNT_snapshot;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-            temp = 0;
-            for(int i=0; i<NUM_AVG_VALUES; i++){
-                temp += anADC1AVG_temp[address-2][i];
-            }
-            anADC1AVG[address-2] = temp/NUM_AVG_VALUES;
-            *highByte = (uint8_t)(anADC1AVG[address-2]>>8);
-            *lowByte = (uint8_t)(anADC1AVG[address-2]&0xFF);
+            break;
+        case 10:
+            *highByte = (uint8_t)(NUM_AVG_VALUES>>8);
+            *lowByte = (uint8_t)NUM_AVG_VALUES;
+            break;
+        case 11:
+            *highByte = (uint8_t)(nButtonPulse_ms>>8);
+            *lowByte = (uint8_t)nButtonPulse_ms;
             break;
         default:
             *highByte = 0;
