@@ -30,20 +30,24 @@ void UartTransmit(uint8_t *data, uint8_t len)
     HAL_UART_Transmit(&huart1, (unsigned char *)data, (uint16_t)len, 100);
 }
 
+int CoilInRange(uint16_t coil, uint16_t start, uint16_t count)
+{
+    if (coil >= start && coil < (start+count)) return 1;
+    else return 0;
+}
+
 /*
  * Interface function for modbus
  */
 uint8_t GetCoil(uint16_t nCoilAddress)
 {
-    if (nCoilAddress >= MDB_ADDR_OUTPUT_COIL &&
-        nCoilAddress < (MDB_ADDR_OUTPUT_COIL+MDB_NUM_OUTPUT_COIL) ) {
+    if (CoilInRange(nCoilAddress, MDB_ADDR_OUTPUT_COIL, MDB_NUM_OUTPUT_COIL)){
         return HAL_GPIO_ReadPin(GPIOC, 1 << (nCoilAddress-MDB_ADDR_OUTPUT_COIL+FIRST_OUTPUT_GPIOC));
-
-    } else if (nCoilAddress >= MDB_ADDR_INPUT_COIL &&
-        nCoilAddress < (MDB_ADDR_INPUT_COIL+MDB_NUM_INPUT_COIL) ) {
+    } else if (CoilInRange(nCoilAddress, MDB_ADDR_INPUT_COIL, MDB_NUM_INPUT_COIL) ) {
         return HAL_GPIO_ReadPin(GPIOB, 1 << (nCoilAddress-MDB_ADDR_INPUT_COIL));
-    } else if (nCoilAddress >= MDB_ADDR_INPUT_COIL_BUTTONS &&
-        nCoilAddress < (MDB_ADDR_INPUT_COIL_BUTTONS+MDB_NUM_INPUT_COIL) ) {
+    } else if (CoilInRange(nCoilAddress, MDB_ADDR_INPUT_COIL_INV, MDB_NUM_INPUT_COIL) ) {
+        return !HAL_GPIO_ReadPin(GPIOB, 1 << (nCoilAddress-MDB_ADDR_INPUT_COIL_INV));
+    } else if (CoilInRange(nCoilAddress, MDB_ADDR_INPUT_COIL_BUTTONS, MDB_NUM_INPUT_COIL) ) {
         return anButtonOut[nCoilAddress-MDB_ADDR_INPUT_COIL_BUTTONS];
     } else {
     	return 0;
@@ -55,13 +59,12 @@ uint8_t GetCoil(uint16_t nCoilAddress)
  */
 int8_t SetCoil(uint16_t nCoilAddress, uint8_t value)
 {
-    if (nCoilAddress < 10) { // TODO insert variable limit
-        HAL_GPIO_WritePin(GPIOC, 1 << (nCoilAddress+FIRST_OUTPUT_GPIOC), value);
+    if (CoilInRange(nCoilAddress, MDB_ADDR_OUTPUT_COIL, 10)) {
+        HAL_GPIO_WritePin(GPIOC, 1 << (nCoilAddress-MDB_ADDR_OUTPUT_COIL+FIRST_OUTPUT_GPIOC), value);
         return 0;
     } else {
         return -1;
     }
-
 }
 
 /*

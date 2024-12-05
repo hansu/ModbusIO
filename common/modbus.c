@@ -151,8 +151,6 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       if(nAddr < MDB_ADDR_OUTPUT_COIL){
         return MODBUS_ERR_ILLEGAL_DATA_VALUE;
       }
-      // Remove address offset
-      nAddr -= MDB_ADDR_OUTPUT_COIL;
 
       // Check CRC
       nCRC16_Rx  = ((uint16_t)pRxPacket[7])<<8;
@@ -204,8 +202,7 @@ uint8_t Modbus_Parse(uint8_t *pRxPacket, uint8_t *pTxPacket, void (*Send)(uint8_
       if(nAddr < MDB_ADDR_OUTPUT_COIL){
         return MODBUS_ERR_ILLEGAL_DATA_VALUE;
       }
-      // Remove address offset
-      nAddr -= MDB_ADDR_OUTPUT_COIL;
+
       // nLen = Quantity of Outputs
       nLen = ((uint16_t)pRxPacket[4])<<8;
       nLen += (uint16_t)pRxPacket[5];

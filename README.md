@@ -32,29 +32,30 @@ Baud rate:. 115200, 8N1
 ### Coils
 | Addr    |                                           |
 |---------|-------------------------------------------|
-| 0 - 9   | GPIO outputs                              |
-| 10 - 25 | GPIO inputs (read only)                   |
-| 26 - 41 | Button inputs with pull-ups (read only) * |
+| 0 - 15  | GPIO inputs (read only)                   |
+| 16 - 31 | GPIO inputs inverted (read only)                   |
+| 32 - 47 | Button inputs with pull-ups (read only) * |
+| 100 - 109 | GPIO outputs                              |
 
 *Extended button logic:
-- 1. A button is read as `1` when pressed.
-- 2. The buttons are software debounced.
-- 3. A button press events generates a pulse of 100 ms (can be changed with write holding 11) if the button is pressed shorter than that.
+1. A button is read as `1` when pressed.
+2. The buttons are software debounced.
+3. A button press events generates a pulse of 100 ms (can be changed with write holding 11) if the button is pressed shorter than that.
 
 This is useful to reduce the ModBus poll rate.
 
 
 ## Testing
 
-### Set single registers/coils via python
+### Read/write registers/coils via python
 
-1. install https://github.com/favalex/modbus-cli 
+1. Install https://github.com/favalex/modbus-cli 
     by: pip install modbus_cli
-2.  Read holding regs and coils in combination with watch:
+2. Read holding regs and coils in combination with watch:  
     `watch -n 0.1 modbus /dev/ttyUSB0 -b 115200 -s 1 h@2 3 4 5 c@0 c@1 c@2`
-3. Write values:
-    `modbus /dev/ttyUSB0 -b 115200 -s 1 c@0=1`
-    `modbus /dev/ttyUSB0 -b 115200 -s 1 h@10=200
+3. Write values:  
+    `modbus /dev/ttyUSB0 -b 115200 -s 1 c@0=1`  
+    `modbus /dev/ttyUSB0 -b 115200 -s 1 h@10=200`
 
 ### Using modpoll
 Run one of the examples scripts in `modpoll/` :
